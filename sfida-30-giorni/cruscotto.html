@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sfida 30 giorni · Cruscotto</title>
+<style>
+:root{
+  --bg:#F4F2EC; --surface:#FFFFFF; --surface-2:#FAF8F3; --line:#E4DFD3; --ink:#1E2420; --muted:#68706A;
+  --brand:#1F4D3A; --brand-soft:#E3EEE7; --gold:#A87B1E; --gold-soft:#F6EDD6;
+  --ok:#2E7D4F; --ok-soft:#E1F1E7; --warn:#A8680E; --warn-soft:#FBEFD9; --bad:#B4372B; --bad-soft:#F9E3E0;
+  --radius:12px; --shadow:0 1px 2px rgba(30,36,32,.05),0 4px 14px rgba(30,36,32,.05);
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans","Noto Naskh Arabic","Geeza Pro",sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#121614; --surface:#1A201C; --surface-2:#1F2621; --line:#2D3630; --ink:#E6ECE7; --muted:#9AA59D;
+  --brand:#5FB389; --brand-soft:#1E3329; --gold:#D6A94A; --gold-soft:#332A16;
+  --ok:#5FB389; --ok-soft:#1E3329; --warn:#E0A24A; --warn-soft:#352914; --bad:#E57A6E; --bad-soft:#3A1E1B;
+  --shadow:none; color-scheme:dark;}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 var(--font)}
+header{position:sticky;top:0;z-index:5;background:var(--brand);color:#fff;padding:10px 14px 0}
+@media (prefers-color-scheme:dark){header{background:#16382A}}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:1100px;margin:0 auto}
+.top h1{font-size:17px;margin:0;font-weight:700;flex:1;min-width:180px}
+.top h1 small{display:block;font-weight:400;opacity:.8;font-size:12px}
+.daynav{display:flex;align-items:center;gap:6px}
+.daynav button{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:8px;width:34px;height:34px;font-size:18px;cursor:pointer}
+.daynav .lbl{min-width:150px;text-align:center;font-weight:600;font-size:14px}
+.daynav .lbl span{display:block;font-weight:400;font-size:12px;opacity:.85}
+nav{display:flex;gap:2px;overflow-x:auto;max-width:1100px;margin:8px auto 0}
+nav button{background:none;border:0;color:#fff;opacity:.75;padding:9px 12px;font:600 14px var(--font);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+nav button.on{opacity:1;border-bottom-color:var(--gold)}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.banner{padding:8px 12px;border-radius:8px;font-size:13px;margin-bottom:12px;background:var(--warn-soft);color:var(--warn)}
+.banner.ok{background:var(--ok-soft);color:var(--ok)}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:10px;margin-bottom:16px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;box-shadow:var(--shadow);min-height:108px}
+.tile .q{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;gap:6px}
+.tile .q .ar{direction:rtl;font-weight:600;color:var(--gold)}
+.tile .v{font-size:26px;font-weight:750;margin:4px 0 2px;letter-spacing:-.5px}
+.tile .s{font-size:12.5px;color:var(--muted)}
+.tile ol{margin:6px 0 0;padding-left:18px;font-size:13.5px}
+.bar{height:6px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--brand);border-radius:4px}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12.5px;font-weight:650}
+.pill.ok{background:var(--ok-soft);color:var(--ok)} .pill.warn{background:var(--warn-soft);color:var(--warn)} .pill.bad{background:var(--bad-soft);color:var(--bad)} .pill.mute{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px;box-shadow:var(--shadow)}
+.card h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.card h2 .ar{direction:rtl;font-weight:600;color:var(--gold);font-size:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.grid2{grid-template-columns:1fr}}
+.prio{display:flex;gap:8px;align-items:center;margin-bottom:7px}
+.prio input{flex:1}
+.st{width:38px;height:38px;border-radius:9px;border:1.5px solid var(--line);background:var(--surface-2);font-size:17px;cursor:pointer;color:var(--muted);flex:none}
+.st.s1{background:var(--ok-soft);border-color:var(--ok);color:var(--ok)}
+.st.s2{background:var(--warn-soft);border-color:var(--warn);color:var(--warn)}
+.st.s3{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:7px 9px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--brand);outline-offset:-1px}
+textarea{min-height:58px;resize:vertical}
+.nrow{display:grid;grid-template-columns:minmax(120px,1.1fr) 82px 1.4fr;gap:8px;align-items:center;padding:5px 0;border-bottom:1px dashed var(--line)}
+.nrow:last-child{border-bottom:0}
+.nrow .l{font-size:14px}
+.nrow .l small{display:block;color:var(--muted);font-size:11.5px}
+.nrow.done .l{color:var(--ok)} .nrow.part .l{color:var(--warn)}
+.sec{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:12px 0 2px;font-weight:700}
+.sec:first-child{margin-top:0}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1.5px solid var(--line);background:var(--surface-2);border-radius:20px;padding:6px 12px;cursor:pointer;font:600 13.5px var(--font);color:var(--muted)}
+.chip.c1{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.chip.c2{border-color:var(--brand);background:var(--brand);color:#fff}
+.btn{background:var(--brand);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:600 14px var(--font);cursor:pointer;white-space:nowrap}
+@media (prefers-color-scheme:dark){.btn{color:#0f1a14}}
+.btn.ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+.btn.sm{padding:4px 9px;font-size:12.5px}
+.form{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;align-items:end}
+.form label{font-size:12px;color:var(--muted);display:block}
+.form .chk{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink);padding:8px 0}
+.form .chk input{width:auto}
+table{width:100%;border-collapse:collapse;font-size:13.5px}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:12px;border-bottom:1px solid var(--line);padding:6px}
+td{border-bottom:1px solid var(--line);padding:6px;vertical-align:middle}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+tr.today td{background:var(--gold-soft)}
+.tw{overflow-x:auto}
+.kpis{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:9px 11px}
+.kpi b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.kpi span{font-size:12px;color:var(--muted)}
+.task{display:flex;gap:9px;align-items:center;padding:6px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.task .bx{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line);flex:none;display:grid;place-items:center;font-size:14px;color:#fff}
+.task.done .bx{background:var(--ok);border-color:var(--ok)}
+.task.done .t{color:var(--muted);text-decoration:line-through}
+.task .t{flex:1}
+.task .d{font-size:12px;color:var(--muted);white-space:nowrap}
+.task.late .d{color:var(--bad);font-weight:700}
+.muted{color:var(--muted)} .warnt{color:var(--warn)} .badt{color:var(--bad)} .okt{color:var(--ok)}
+.hint{font-size:12.5px;color:var(--muted);margin:4px 0 0}
+.right{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:10px}
+pre.rep{white-space:pre-wrap;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12.5px;max-height:360px;overflow:auto}
+.toast{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:8px 16px;border-radius:20px;font-size:13.5px;opacity:0;transition:.25s;pointer-events:none;z-index:20}
+.toast.show{opacity:1}
+.hide{display:none!important}
+.save{font-size:12px;opacity:.85}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>Sfida 30 giorni <small>23 novembre – 22 dicembre 2026 · <span id="saveState" class="save">…</span></small></h1>
+    <div class="daynav">
+      <button id="prevDay" aria-label="Giorno precedente">‹</button>
+      <div class="lbl" id="dayLbl"></div>
+      <button id="nextDay" aria-label="Giorno successivo">›</button>
+    </div>
+  </div>
+  <nav id="tabs">
+    <button data-t="oggi" class="on">Oggi</button>
+    <button data-t="tarbal">Al-Tarbal</button>
+    <button data-t="jisr">Al-Jisr</button>
+    <button data-t="rapporti">Rapporti</button>
+    <button data-t="piano">Piano 30 giorni</button>
+    <button data-t="impost">Impostazioni</button>
+  </nav>
+</header>
+<main>
+  <div id="banner" class="banner hide"></div>
+
+  <!-- ===== OGGI ===== -->
+  <section id="v-oggi">
+    <div class="tiles" id="tiles"></div>
+    <div class="grid2">
+      <div>
+        <div class="card">
+          <h2>Le 3 priorità del giorno <span class="ar">أهم ثلاث مهام</span></h2>
+          <div id="prioBox"></div>
+          <p class="hint">Tocca il quadrato: ✓ completata · ◐ parziale · ✗ non completata.</p>
+        </div>
+        <div class="card">
+          <h2>Preghiere <span class="ar">الصلوات</span></h2>
+          <div class="chips" id="prayBox"></div>
+          <p class="hint">Un tocco = pregata · due tocchi = in moschea 🕌 · Isha in moschea alle 20:00.</p>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Risultati di oggi <span class="ar">الإنجاز</span></h2>
+        <div id="numBox"></div>
+        <p class="hint">Inserisci solo quantità verificate. Se manca l'obiettivo (Impostazioni), conta "fatto / non fatto".</p>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Valutazione serale <span class="ar">التقييم المسائي</span></h2>
+      <label class="muted" style="font-size:12px">Ostacoli / problemi</label>
+      <textarea id="ostacoli" placeholder="Cosa ha impedito di completare? (diventa un'azione per domani)"></textarea>
+      <div class="sec" style="margin-top:12px">Priorità di domani</div>
+      <div id="domaniBox"></div>
+      <div class="right"><button class="btn ghost sm" id="suggestDomani">Proponi in automatico</button></div>
+    </div>
+  </section>
+
+  <!-- ===== TARBAL ===== -->
+  <section id="v-tarbal" class="hide">
+    <div class="kpis" id="tarbalKpis"></div>
+    <div class="card">
+      <h2>Registra una vendita <span class="ar">تسجيل بيع</span></h2>
+      <div class="form">
+        <div><label>Data</label><input type="date" id="vData"></div>
+        <div><label>Cliente</label><input id="vCliente" placeholder="Moschea, libreria, privato…"></div>
+        <div><label>Titolo / confezione</label><input id="vTitolo" list="titoliList"></div>
+        <div><label>Quantità</label><input type="number" min="1" id="vQta" inputmode="numeric"></div>
+        <div><label>Importo totale (€)</label><input type="number" min="0" step="0.01" id="vImp" inputmode="decimal"></div>
+        <div class="chk"><input type="checkbox" id="vNuovo"><label for="vNuovo" style="font-size:13.5px;color:var(--ink)">Nuovo cliente</label></div>
+        <div class="chk"><input type="checkbox" id="vInc"><label for="vInc" style="font-size:13.5px;color:var(--ink)">Già incassato</label></div>
+        <div><button class="btn" id="vAdd" style="width:100%">Aggiungi</button></div>
+      </div>
+      <datalist id="titoliList"></datalist>
+    </div>
+    <div class="card">
+      <h2>Vendite registrate</h2>
+      <div class="tw"><table id="vendTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Inventario per titolo <span class="ar">جرد المخزون</span></h2>
+      <div id="invCheck" class="hint" style="margin-bottom:8px"></div>
+      <div class="tw"><table id="invTable"></table></div>
+      <div class="form" style="margin-top:10px">
+        <div style="grid-column:span 2"><label>Titolo</label><input id="iTit"></div>
+        <div><label>Quantità contata</label><input type="number" min="0" id="iQ" inputmode="numeric"></div>
+        <div><label>Prezzo unitario (€)</label><input type="number" min="0" step="0.01" id="iP" placeholder="se verificato"></div>
+        <div><button class="btn" id="iAdd" style="width:100%">Aggiungi titolo</button></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== JISR ===== -->
+  <section id="v-jisr" class="hide">
+    <div class="kpis" id="jisrKpis"></div>
+    <div class="grid2">
+      <div class="card">
+        <h2>Attività dei 4 progetti <span class="ar">مهام الجسر</span></h2>
+        <div id="jisrTasks"></div>
+      </div>
+      <div>
+        <div class="card">
+          <h2>Nuova richiesta di iscrizione <span class="ar">طلب تسجيل</span></h2>
+          <div class="form">
+            <div><label>Data</label><input type="date" id="lData"></div>
+            <div><label>Nome</label><input id="lNome"></div>
+            <div><label>Canale</label><select id="lCanale"><option>WhatsApp</option><option>Facebook</option><option>Instagram</option><option>Passaparola</option><option>Moschea</option><option>Telefono</option><option>Altro</option></select></div>
+            <div><label>Corso / note</label><input id="lNote"></div>
+            <div><label>Prossimo contatto</label><input type="date" id="lNext"></div>
+            <div><button class="btn" id="lAdd" style="width:100%">Aggiungi</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Registro richieste</h2>
+          <div class="tw"><table id="leadTable"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== RAPPORTI ===== -->
+  <section id="v-rapporti" class="hide">
+    <div class="card">
+      <h2>Settimana <select id="weekSel" style="width:auto"></select></h2>
+      <div class="kpis" id="weekDomains"></div>
+      <div class="tw"><table id="weekTable"></table></div>
+    </div>
+    <div class="card">
+      <h2>Rapporti da copiare</h2>
+      <div class="chips" style="margin-bottom:10px">
+        <button class="btn" data-rep="day">Rapporto del giorno</button>
+        <button class="btn ghost" data-rep="week">Rapporto della settimana</button>
+        <button class="btn ghost" data-rep="final">Rapporto finale (30 giorni)</button>
+      </div>
+      <pre class="rep" id="repOut">Scegli un rapporto: viene copiato negli appunti, pronto da incollare in chat.</pre>
+    </div>
+  </section>
+
+  <!-- ===== PIANO ===== -->
+  <section id="v-piano" class="hide">
+    <div class="card">
+      <h2>Piano operativo dei 30 giorni</h2>
+      <div class="tw"><table id="planTable"></table></div>
+    </div>
+  </section>
+
+  <!-- ===== IMPOSTAZIONI ===== -->
+  <section id="v-impost" class="hide">
+    <div class="card">
+      <h2>Dati di partenza <span class="ar">بيانات الانطلاق</span></h2>
+      <div class="form" id="cfgForm"></div>
+      <p class="hint">Lascia vuoto ciò che non è ancora verificato: il cruscotto lo segnala come "da definire".</p>
+    </div>
+    <div class="card">
+      <h2>Obiettivi giornalieri</h2>
+      <div class="form" id="tgtForm"></div>
+    </div>
+    <div class="card">
+      <h2>Copia di sicurezza</h2>
+      <p class="hint" id="storeInfo"></p>
+      <div class="right" style="justify-content:flex-start">
+        <button class="btn ghost" id="expBtn">Esporta / copia dati (JSON)</button>
+        <label class="btn ghost" style="display:inline-block">Importa dati<input type="file" id="impFile" accept=".json,application/json" class="hide"></label>
+      </div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+/* ---------- costanti ---------- */
+const START = "2026-11-23", NDAYS = 30;
+const PLAN = [
+ ["Sessione di avvio: elenco dei titoli e metodo di conteggio","Inventario iniziale delle attività: studenti, insegnanti, corsi, quote, strumenti in uso"],
+ ["Conteggio fisico: prima metà del magazzino","P1 · Bozza modello di ricevuta (AR/IT)"],
+ ["Conteggio completato e confronto con le 1.500 dichiarate","P1 · Numerazione progressiva e regole di emissione"],
+ ["Prezzi verificati per titolo (costo, pubblico, ingrosso)","P1 · Collegamento ricevuta ↔ studente ↔ pagamento"],
+ ["Bozza del catalogo commerciale","P1 · Archivio e storico; prova con 5 ricevute reali"],
+ ["Offerte e strategie di vendita","P4 · Situazione iniziale iscritti; avvio registro richieste"],
+ ["Revisione settimanale 1","Revisione settimanale 1"],
+ ["Lista di 30 potenziali clienti","P2 · Studenti: anagrafica, iscrizioni, quote"],
+ ["Materiale pubblicitario in arabo","P2 · Insegnanti: anagrafica, assegnazioni, compensi"],
+ ["Materiale pubblicitario in italiano","P2 · Calendario lezioni e stati"],
+ ["Primi 10 contatti e invio catalogo","P2 · Registro presenze e assenze"],
+ ["Altri 10 contatti + richiami","P2 · Contabilità: dovuti, pagati, saldi, scadenze, entrate/uscite"],
+ ["Primi ordini: registro consegne e pagamenti","P2 · Report e caricamento dati reali"],
+ ["Revisione settimanale 2","Revisione 2 + prova completa del sistema P2"],
+ ["Campagna: 10 contatti + richiami","P3 · Pubblico di riferimento e piano pubblicitario"],
+ ["Campagna: 10 contatti + richiami","P3 · Contenuti in arabo"],
+ ["Consegne e riscossione incassi","P3 · Contenuti in italiano"],
+ ["Campagna: nuovi canali (moschee, eventi)","P3 · Immagini e video"],
+ ["Campagna: 10 contatti + richiami","P3 · Canali di comunicazione e modulo di contatto"],
+ ["Consegne e incassi","P3 · Lancio della campagna"],
+ ["Revisione settimanale 3","Revisione settimanale 3"],
+ ["Campagna + offerta di fine anno","P4 · Risposta a tutte le richieste ricevute"],
+ ["Campagna: 10 contatti + richiami","P4 · Lezioni di prova e richiami"],
+ ["Riscossione incassi arretrati","P3 · Monitoraggio della campagna"],
+ ["Campagna: clienti già serviti (riordino)","P4 · Conversione richieste in iscrizioni"],
+ ["Consegne e incassi","P2 · Verifica saldi e crediti da riscuotere"],
+ ["Campagna: ultimi contatti dell'anno","P4 · Richiami finali delle richieste aperte"],
+ ["Revisione settimanale 4","Revisione settimanale 4"],
+ ["Chiusura incassi e inventario finale","Consolidamento: P1–P4 in uso, dati aggiornati"],
+ ["Rapporto finale Al-Tarbal","Rapporto finale Al-Jisr + rapporto finale dei 30 giorni"]
+];
+const WEEKS = [[1,7,"Impostazione e inventario"],[8,14,"Materiali e sistema contabile"],[15,21,"Campagne"],[22,28,"Conversione"],[29,30,"Chiusura"]];
+const JISR_TASKS = [
+ ["j01","Inventario","Inventario iniziale delle attività e degli strumenti in uso",1],
+ ["p1a","P1 Ricevute","Modello professionale di ricevuta (AR/IT)",2],
+ ["p1b","P1 Ricevute","Numerazione progressiva",3],
+ ["p1c","P1 Ricevute","Collegamento ricevuta ↔ studente ↔ pagamento",4],
+ ["p1d","P1 Ricevute","Archivio organizzato e storico consultabile",5],
+ ["p1e","P1 Ricevute","Prova con 5 ricevute reali",5],
+ ["p4a","P4 Iscritti","Situazione iniziale degli iscritti (numero verificato)",6],
+ ["p4b","P4 Iscritti","Registro delle richieste attivo",6],
+ ["p2a","P2 Sistema","Studenti: anagrafica, iscrizioni, abbonamenti e quote",8],
+ ["p2b","P2 Sistema","Insegnanti: anagrafica, assegnazioni, compensi",9],
+ ["p2c","P2 Sistema","Calendario lezioni: programmate, svolte, annullate, recuperate",10],
+ ["p2d","P2 Sistema","Presenze e assenze",11],
+ ["p2e","P2 Sistema","Contabilità: dovuti, pagati, saldi, scadenze, entrate/uscite",12],
+ ["p2f","P2 Sistema","Report: finanze, studenti, insegnanti, lezioni, crediti",13],
+ ["p2g","P2 Sistema","Prova completa con dati reali",14],
+ ["p3a","P3 Campagna","Pubblico di riferimento",15],
+ ["p3b","P3 Campagna","Piano pubblicitario",15],
+ ["p3c","P3 Campagna","Contenuti in arabo",16],
+ ["p3d","P3 Campagna","Contenuti in italiano",17],
+ ["p3e","P3 Campagna","Immagini e video",18],
+ ["p3f","P3 Campagna","Canali di comunicazione organizzati",19],
+ ["p3g","P3 Campagna","Lancio della campagna",20],
+ ["p3h","P3 Campagna","Monitoraggio richieste e contatti ricevuti",24],
+ ["p4c","P4 Iscritti","Risposta a tutte le richieste ricevute",22],
+ ["p4d","P4 Iscritti","Lezioni di prova e richiami",23],
+ ["p4e","P4 Iscritti","Conversione delle richieste in iscrizioni",25],
+ ["p2h","P2 Sistema","Verifica saldi e crediti da riscuotere",26],
+ ["p4f","P4 Iscritti","Misura settimanale della crescita (4 settimane)",28]
+];
+// voci numeriche: chiave, etichetta, unità, ambito, segnaposto testo
+const NUMS = [
+ ["hifz","Memorizzazione","righe/pagine","corano","da … a …"],
+ ["murajaa","Ripasso","pagine","corano","quali parti"],
+ ["tilawa","Lettura del Corano","pagine","corano",""],
+ ["studio","Formazione religiosa/scientifica","ore","formazione","testo · capitolo"],
+ ["spec","Educazione islamica","ore","spec","testo · capitolo"],
+ ["lettura","Lettura e cultura","pagine","lettura","libro"],
+ ["tarbal_h","Al-Tarbal","ore","tarbal","cosa è stato fatto"],
+ ["jisr_h","Al-Jisr","ore","jisr","cosa è stato fatto"],
+ ["sport","Sport","minuti","salute",""],
+ ["sonno","Sonno","ore","salute",""],
+ ["famiglia","Famiglia","minuti","famiglia",""],
+ ["figli","Figli","minuti","famiglia",""]
+];
+const SECS = {corano:"Corano",formazione:"Formazione",spec:"Specializzazione",lettura:"Lettura",tarbal:"Ore istituzionali",jisr:"Ore istituzionali",salute:"Salute e famiglia",famiglia:"Salute e famiglia"};
+const DOMAINS = [["corano","Corano"],["formazione","Formazione"],["spec","Educazione isl."],["lettura","Lettura"],["tarbal","Al-Tarbal"],["jisr","Al-Jisr"],["salute","Salute"],["famiglia","Famiglia"],["preghiera","Preghiere"]];
+const PRAYERS = [["fajr","Fajr"],["dhuhr","Dhuhr"],["asr","Asr"],["maghrib","Maghrib"],["isha","Isha 20:00"]];
+const LEAD_ST = ["Nuova richiesta","Contattato","Lezione di prova","Iscritto","Non interessato"];
+const CFG_FIELDS = [
+ ["citta","Città (orari di preghiera)","text"],
+ ["stockIniziale","Al-Tarbal · confezioni iniziali","number"],
+ ["obVendite","Al-Tarbal · obiettivo vendite 30 gg (confezioni)","number"],
+ ["obEuro","Al-Tarbal · obiettivo incassi 30 gg (€)","number"],
+ ["iscrittiIniziali","Al-Jisr · iscritti al 23/11","number"],
+ ["obIscrizioni","Al-Jisr · obiettivo nuove iscrizioni","number"]
+];
+
+/* ---------- utilità date ---------- */
+const pad = n => String(n).padStart(2,"0");
+const iso = d => d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const parse = s => { const [y,m,d]=s.split("-").map(Number); return new Date(y,m-1,d); };
+const addDays = (s,n) => { const d=parse(s); d.setDate(d.getDate()+n); return iso(d); };
+const dayIndex = s => Math.round((parse(s)-parse(START))/864e5)+1; // 1..30
+const dateOf = n => addDays(START,n-1);
+const END = dateOf(NDAYS);
+const GG = ["dom","lun","mar","mer","gio","ven","sab"];
+const fmt = s => { const d=parse(s); return GG[d.getDay()]+" "+pad(d.getDate())+"/"+pad(d.getMonth()+1); };
+const todayIso = () => iso(new Date());
+const clampDay = s => s<START?START:(s>END?END:s);
+const euro = v => (v==null||isNaN(v))?"—":"€ "+Number(v).toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2});
+const num = v => (v===""||v==null||isNaN(Number(v)))?null:Number(v);
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid = () => Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const $ = id => document.getElementById(id);
+
+/* ---------- stato ---------- */
+const emptyState = () => ({
+  cfg:{citta:"",stockIniziale:1500,obVendite:null,obEuro:null,iscrittiIniziali:null,obIscrizioni:null,target:{tarbal_h:2,jisr_h:2}},
+  inv:{righe:[]}, jisr:{done:{}}, giorni:{}, vend:{}, lead:{}
+});
+let S = emptyState();
+let cur = clampDay(todayIso());
+let tab = "oggi";
+
+/* ---------- archiviazione: db dell'artifact, con copia locale ---------- */
+const LKEY = "sfida30_v1";
+const store = { db:null, mode:"locale" };
+const busy = {}, dirty = {};
+function pathData(path){
+  const [c,id] = path.split("/");
+  if(path==="sfida/config") return S.cfg;
+  if(path==="sfida/inventario") return S.inv;
+  if(path==="sfida/jisr") return S.jisr;
+  if(c==="giorni") return S.giorni[id];
+  if(c==="vendite") return S.vend[id];
+  if(c==="lead") return S.lead[id];
+}
+function localSave(){ try{ localStorage.setItem(LKEY, JSON.stringify(S)); }catch(e){} }
+const timers = {};
+function persist(path){
+  localSave();
+  if(!store.db) { setSave("salvato su questo dispositivo"); return; }
+  setSave("salvataggio…");
+  clearTimeout(timers[path]);
+  timers[path] = setTimeout(()=>flush(path), 700);
+}
+async function flush(path){
+  if(busy[path]){ dirty[path]=true; return; }
+  busy[path]=true;
+  do{
+    dirty[path]=false;
+    const d = pathData(path);
+    try{
+      if(d===undefined) await store.db.doc(path).delete();
+      else await store.db.doc(path).set(JSON.parse(JSON.stringify(d)));
+      setSave("salvato ✓");
+    }catch(e){ setSave("errore di salvataggio"); showBanner("Salvataggio non riuscito ("+(e&&e.code||"errore")+"). I dati restano su questo dispositivo: esporta una copia in Impostazioni."); }
+  }while(dirty[path]);
+  busy[path]=false;
+}
+function setSave(t){ $("saveState").textContent = t; }
+function showBanner(t, ok){ const b=$("banner"); b.textContent=t; b.className="banner"+(ok?" ok":""); }
+
+async function loadDb(db){
+  const out = emptyState();
+  const [c,i,j,g,v,l] = await Promise.all([
+    db.doc("sfida/config").get(), db.doc("sfida/inventario").get(), db.doc("sfida/jisr").get(),
+    db.collection("giorni").get(), db.collection("vendite").get(), db.collection("lead").get()
+  ]);
+  if(c.exists) out.cfg = Object.assign(out.cfg, c.data());
+  if(i.exists) out.inv = Object.assign(out.inv, i.data());
+  if(j.exists) out.jisr = Object.assign(out.jisr, j.data());
+  g.docs.forEach(d=>out.giorni[d.id]=JSON.parse(JSON.stringify(d.data())));
+  v.docs.forEach(d=>out.vend[d.id]=JSON.parse(JSON.stringify(d.data())));
+  l.docs.forEach(d=>out.lead[d.id]=JSON.parse(JSON.stringify(d.data())));
+  out.cfg = JSON.parse(JSON.stringify(out.cfg)); out.inv=JSON.parse(JSON.stringify(out.inv)); out.jisr=JSON.parse(JSON.stringify(out.jisr));
+  if(!out.cfg.target) out.cfg.target={};
+  return out;
+}
+async function initStore(){
+  try{ const raw=localStorage.getItem(LKEY); if(raw){ S=Object.assign(emptyState(), JSON.parse(raw)); } }catch(e){}
+  renderAll();
+  if(!(window.claude && typeof window.claude.use==="function")){ setSave("salvato su questo dispositivo"); return; }
+  let db=null;
+  try{ db = await window.claude.use("db"); }catch(e){ db=null; }
+  if(!db){ setSave("salvato su questo dispositivo"); return; }
+  setSave("caricamento…");
+  let timedOut=false;
+  const t = setTimeout(()=>{ timedOut=true; showBanner("I dati online non rispondono ancora: mostro la copia di questo dispositivo, che potrebbe non essere aggiornata."); }, 10000);
+  try{
+    const data = await loadDb(db);
+    clearTimeout(t);
+    const hasRemote = Object.keys(data.giorni).length || Object.keys(data.vend).length || Object.keys(data.lead).length || data.inv.righe.length || Object.keys(data.jisr.done||{}).length;
+    store.db=db; store.mode="online";
+    if(hasRemote){ S=data; localSave(); }
+    else {
+      // primo avvio online: carica eventuale copia locale
+      const hasLocal = Object.keys(S.giorni).length || S.inv.righe.length;
+      if(hasLocal){ persistAll(); } else { S.cfg = Object.assign(S.cfg, data.cfg); }
+    }
+    if(timedOut) $("banner").className="banner hide";
+    setSave("sincronizzato ✓");
+    renderAll();
+  }catch(e){
+    clearTimeout(t);
+    showBanner("Dati online non disponibili ("+(e&&e.code||"errore")+"): lavoro sulla copia di questo dispositivo.");
+    setSave("salvato su questo dispositivo");
+  }
+}
+function persistAll(){
+  persist("sfida/config"); persist("sfida/inventario"); persist("sfida/jisr");
+  Object.keys(S.giorni).forEach(k=>persist("giorni/"+k));
+  Object.keys(S.vend).forEach(k=>persist("vendite/"+k));
+  Object.keys(S.lead).forEach(k=>persist("lead/"+k));
+}
+
+/* ---------- logica del giorno ---------- */
+function prevDomani(date){
+  if(date<=START) return null;
+  const p = S.giorni[addDays(date,-1)];
+  if(p && p.domani && p.domani.some(x=>x&&x.trim())) return p.domani;
+  return null;
+}
+function defaultPrio(date){
+  const n=dayIndex(date), p=PLAN[n-1]||["",""];
+  const carried = prevDomani(date);
+  const base = carried ? carried.slice(0,3) : ["Al-Jisr · "+p[1], "Al-Tarbal · "+p[0], "Corano · memorizzazione e ripasso del giorno"];
+  while(base.length<3) base.push("");
+  return base.map(t=>({t:t||"",s:0}));
+}
+function getDay(date, create){
+  let d = S.giorni[date];
+  if(!d){
+    d = {prio:defaultPrio(date), num:{}, txt:{}, pr:{}, adhkar:{m:false,s:false}, ostacoli:"", domani:["","",""]};
+    if(create){ S.giorni[date]=d; }
+  }
+  return d;
+}
+function touch(date){ if(!S.giorni[date]) S.giorni[date]=getDay(date,false); persist("giorni/"+date); renderTiles(); }
+
+function itemScores(date){
+  const d=getDay(date,false), T=S.cfg.target||{}, items=[];
+  d.prio.forEach((p,i)=>{ if(p.t && p.t.trim()) items.push({amb:"prio",l:p.t,sc:p.s===1?1:(p.s===2?0.5:0)}); });
+  NUMS.forEach(([k,l,u,amb])=>{
+    const v=num(d.num[k]), t=num(T[k]);
+    let sc = 0;
+    if(v!=null && v>0) sc = (t && t>0) ? Math.min(v/t,1) : 1;
+    items.push({amb,l,sc,k});
+  });
+  items.push({amb:"corano",l:"Adhkār del mattino",sc:d.adhkar.m?1:0});
+  items.push({amb:"corano",l:"Adhkār della sera",sc:d.adhkar.s?1:0});
+  PRAYERS.forEach(([k,l])=>items.push({amb:"preghiera",l,sc:(d.pr[k]||0)>0?1:0}));
+  return items;
+}
+function completion(date){
+  const it=itemScores(date), tot=it.length, got=it.reduce((a,b)=>a+b.sc,0);
+  return {pct: tot?Math.round(got/tot*100):0, got, tot, rest: it.filter(x=>x.sc<1)};
+}
+function hasData(date){ return !!S.giorni[date]; }
+
+/* ---------- indicatori ---------- */
+function tarbalStats(){
+  const v=Object.values(S.vend);
+  const sold=v.reduce((a,b)=>a+(num(b.q)||0),0);
+  const val=v.reduce((a,b)=>a+(num(b.imp)||0),0);
+  const inc=v.filter(x=>x.inc).reduce((a,b)=>a+(num(b.imp)||0),0);
+  const nuovi=v.filter(x=>x.nuovo).length;
+  const stock=num(S.cfg.stockIniziale)||1500;
+  return {stock,sold,res:stock-sold,pct:stock?sold/stock*100:0,val,inc,daInc:val-inc,nuovi,n:v.length};
+}
+function jisrStats(ref){
+  const today=ref||todayIso();
+  const done=JISR_TASKS.filter(t=>S.jisr.done[t[0]]).length;
+  const late=JISR_TASKS.filter(t=>!S.jisr.done[t[0]] && dateOf(t[3])<today).length;
+  const L=Object.values(S.lead);
+  const iscr=L.filter(x=>x.st==="Iscritto");
+  const base=num(S.cfg.iscrittiIniziali);
+  const entrate=iscr.reduce((a,b)=>a+(num(b.quota)||0),0);
+  const followLate=L.filter(x=>x.next && x.next<today && x.st!=="Iscritto" && x.st!=="Non interessato").length;
+  return {done,tot:JISR_TASKS.length,late,rich:L.length,iscr:iscr.length,base,att:base==null?null:base+iscr.length,conv:L.length?iscr.length/L.length*100:null,entrate,followLate};
+}
+function pace(){
+  const t=todayIso();
+  if(t<START) return {cls:"mute",lbl:"Non iniziata",why:"La sfida parte lunedì 23 novembre."};
+  const last = t>END?END:addDays(t,-1);
+  const days=[]; for(let s=START;s<=last;s=addDays(s,1)) days.push(s);
+  const avg = days.length? Math.round(days.reduce((a,s)=>a+completion(s).pct,0)/days.length) : null;
+  const js=jisrStats(), ts=tarbalStats(), why=[];
+  let lvl=0;
+  if(avg!=null){ why.push("media giorni passati "+avg+"%"); if(avg<65) lvl=2; else if(avg<85) lvl=Math.max(lvl,1); }
+  if(js.late){ why.push(js.late+" attività Al-Jisr scadute"); lvl=Math.max(lvl,1); if(js.late>=4) lvl=2; }
+  const ob=num(S.cfg.obVendite);
+  if(ob){ const el=Math.min(dayIndex(t>END?END:t),NDAYS); const exp=Math.round(ob*el/NDAYS); why.push("vendite "+ts.sold+"/"+exp+" attese"); if(ts.sold<exp*0.6) lvl=Math.max(lvl,2); else if(ts.sold<exp*0.9) lvl=Math.max(lvl,1); }
+  if(avg==null && !js.late) return {cls:"mute",lbl:"Primo giorno",why:"Il ritmo si calcola da domani."};
+  const LV=[{cls:"ok",lbl:"In linea"},{cls:"warn",lbl:"Attenzione"},{cls:"bad",lbl:"In ritardo"}];
+  return Object.assign({}, LV[lvl], {why:why.join(" · ")});
+}
+function tomorrowTop3(){
+  const d=S.giorni[cur];
+  if(d && d.domani && d.domani.some(x=>x&&x.trim())) return {list:d.domani.filter(x=>x&&x.trim()), src:"impostate da te"};
+  return {list:suggestDomani(cur), src:"proposta automatica"};
+}
+function suggestDomani(date){
+  const d=getDay(date,false), out=[];
+  d.prio.forEach(p=>{ if(p.t && p.t.trim() && p.s!==1) out.push("↻ "+p.t.replace(/^↻ /,"").trim()); });
+  const n=dayIndex(date)+1;
+  if(n<=NDAYS){ const p=PLAN[n-1]; out.push("Al-Jisr · "+p[1]); out.push("Al-Tarbal · "+p[0]); }
+  out.push("Corano · memorizzazione e ripasso del giorno");
+  return out.slice(0,3);
+}
+
+/* ---------- render: intestazione ---------- */
+function renderHeader(){
+  const n=dayIndex(cur);
+  $("dayLbl").innerHTML = "Giorno "+n+"/30<span>"+fmt(cur)+"/2026"+(cur===todayIso()?" · oggi":"")+"</span>";
+  $("prevDay").disabled = cur<=START; $("nextDay").disabled = cur>=END;
+}
+
+/* ---------- render: tessere ---------- */
+function renderTiles(){
+  const c=completion(cur), ts=tarbalStats(), js=jisrStats(), pc=pace(), tm=tomorrowTop3();
+  const restList = c.rest.slice(0,3).map(x=>esc(x.l.length>40?x.l.slice(0,38)+"…":x.l)).join(" · ")+(c.rest.length>3?" …":"");
+  const iscr = js.base==null ? '<div class="v">+'+js.iscr+'</div><div class="s">iscritti iniziali: <b class="warnt">da definire</b></div>'
+    : '<div class="v">'+js.att+'</div><div class="s">'+js.base+' iniziali · <b class="okt">+'+js.iscr+'</b> nuovi'+(num(S.cfg.obIscrizioni)?' · obiettivo +'+S.cfg.obIscrizioni:'')+'</div>';
+  $("tiles").innerHTML = `
+  <div class="tile"><div class="q">Fatto oggi <span class="ar">ماذا أنجزت اليوم؟</span></div><div class="v">${c.pct}%</div><div class="s">${c.got.toFixed(1).replace(".0","")} di ${c.tot} voci</div><div class="bar"><i style="width:${c.pct}%"></i></div></div>
+  <div class="tile"><div class="q">Resta da fare <span class="ar">ماذا بقي؟</span></div><div class="v">${c.rest.length}</div><div class="s">${restList||"Tutto completato ✓"}</div></div>
+  <div class="tile"><div class="q">Ritmo <span class="ar">متقدم أم متأخر؟</span></div><div class="v"><span class="pill ${pc.cls}" style="font-size:16px">${pc.lbl}</span></div><div class="s">${esc(pc.why)}</div></div>
+  <div class="tile"><div class="q">Magazzino Al-Tarbal <span class="ar">مخزون الطربال</span></div><div class="v">${ts.res.toLocaleString("it-IT")}</div><div class="s">rimaste su ${ts.stock.toLocaleString("it-IT")} · smaltito ${ts.pct.toFixed(1)}% · incassato ${euro(ts.inc)}</div><div class="bar"><i style="width:${Math.min(ts.pct,100)}%;background:var(--gold)"></i></div></div>
+  <div class="tile"><div class="q">Attività Al-Jisr <span class="ar">مهام الجسر</span></div><div class="v">${js.done}/${js.tot}</div><div class="s">${js.late?'<b class="badt">'+js.late+' in ritardo</b>':'nessuna in ritardo'}${js.followLate?' · '+js.followLate+' richiami scaduti':''}</div><div class="bar"><i style="width:${js.done/js.tot*100}%"></i></div></div>
+  <div class="tile"><div class="q">Iscritti <span class="ar">المسجلون</span></div>${iscr}</div>
+  <div class="tile" style="grid-column:span 2;min-width:0"><div class="q">Le 3 priorità di domani <span class="ar">أهم ثلاث مهام غدًا</span></div><ol>${tm.list.map(x=>"<li>"+esc(x)+"</li>").join("")}</ol><div class="s">${tm.src}</div></div>`;
+}
+
+/* ---------- render: oggi ---------- */
+const ST_ICON=["","✓","◐","✗"];
+function renderOggi(){
+  const d=getDay(cur,false);
+  $("prioBox").innerHTML = d.prio.map((p,i)=>`<div class="prio"><button class="st s${p.s}" data-pi="${i}" aria-label="Stato priorità ${i+1}">${ST_ICON[p.s]}</button><input data-pt="${i}" value="${esc(p.t)}" placeholder="Priorità ${i+1}"></div>`).join("");
+  $("prayBox").innerHTML = PRAYERS.map(([k,l])=>{const v=d.pr[k]||0; return `<button class="chip c${v}" data-pr="${k}">${v===2?"🕌 ":v===1?"✓ ":""}${l}</button>`;}).join("")
+    + `<button class="chip ${d.adhkar.m?"c1":""}" data-ad="m">${d.adhkar.m?"✓ ":""}Adhkār mattino</button><button class="chip ${d.adhkar.s?"c1":""}" data-ad="s">${d.adhkar.s?"✓ ":""}Adhkār sera</button>`;
+  const T=S.cfg.target||{}; let html="", lastSec="";
+  NUMS.forEach(([k,l,u,amb,ph])=>{
+    const sec=SECS[amb]; if(sec!==lastSec){ html+=`<div class="sec">${sec}</div>`; lastSec=sec; }
+    const t=num(T[k]); const v=num(d.num[k]);
+    const cls = v!=null&&v>0 ? ((t&&v<t)?"part":"done") : "";
+    html+=`<div class="nrow ${cls}" id="row-${k}"><div class="l">${l}<small>${u}${t?" · obiettivo "+t:" · obiettivo da definire"}</small></div><input type="number" min="0" step="any" inputmode="decimal" data-n="${k}" value="${d.num[k]??""}" aria-label="${l}">${ph?`<input data-x="${k}" value="${esc(d.txt[k]||"")}" placeholder="${ph}">`:"<span></span>"}</div>`;
+  });
+  $("numBox").innerHTML = html;
+  $("ostacoli").value = d.ostacoli||"";
+  $("domaniBox").innerHTML = [0,1,2].map(i=>`<div class="prio"><span class="muted" style="width:18px">${i+1}.</span><input data-dm="${i}" value="${esc(d.domani[i]||"")}" placeholder="Priorità ${i+1} di domani"></div>`).join("");
+  renderTiles();
+}
+function bindOggi(){
+  $("v-oggi").addEventListener("click", e=>{
+    const d=getDay(cur,true), b=e.target.closest("button"); if(!b) return;
+    if(b.dataset.pi!=null){ const p=d.prio[+b.dataset.pi]; p.s=(p.s+1)%4; b.className="st s"+p.s; b.textContent=ST_ICON[p.s]; touch(cur); }
+    else if(b.dataset.pr){ const k=b.dataset.pr; d.pr[k]=((d.pr[k]||0)+1)%3; touch(cur); renderOggi(); }
+    else if(b.dataset.ad){ d.adhkar[b.dataset.ad]=!d.adhkar[b.dataset.ad]; touch(cur); renderOggi(); }
+    else if(b.id==="suggestDomani"){ d.domani=suggestDomani(cur); while(d.domani.length<3) d.domani.push(""); touch(cur); renderOggi(); }
+  });
+  $("v-oggi").addEventListener("input", e=>{
+    const el=e.target, d=getDay(cur,true);
+    if(el.dataset.pt!=null) d.prio[+el.dataset.pt].t=el.value;
+    else if(el.dataset.n){ const k=el.dataset.n; d.num[k]=el.value===""?null:Number(el.value);
+      const t=num((S.cfg.target||{})[k]), v=num(d.num[k]); $("row-"+k).className="nrow "+(v!=null&&v>0?((t&&v<t)?"part":"done"):""); }
+    else if(el.dataset.x) d.txt[el.dataset.x]=el.value;
+    else if(el.dataset.dm!=null) d.domani[+el.dataset.dm]=el.value;
+    else if(el.id==="ostacoli") d.ostacoli=el.value;
+    else return;
+    touch(cur);
+  });
+}
+
+/* ---------- render: Tarbal ---------- */
+function renderTarbal(){
+  const s=tarbalStats(), ob=num(S.cfg.obVendite);
+  $("tarbalKpis").innerHTML = [
+    [s.stock.toLocaleString("it-IT"),"confezioni iniziali"],[s.sold.toLocaleString("it-IT"),"vendute"+(ob?" · obiettivo "+ob:"")],
+    [s.res.toLocaleString("it-IT"),"residue"],[s.pct.toFixed(1)+"%","smaltimento"],
+    [euro(s.val),"valore vendite"],[euro(s.inc),"incassato"],[euro(s.daInc),"da incassare"],[s.nuovi,"nuovi clienti"]
+  ].map(([b,l])=>`<div class="kpi"><b>${b}</b><span>${l}</span></div>`).join("");
+  $("vData").value = $("vData").value || clampDay(cur);
+  const rows=Object.entries(S.vend).sort((a,b)=>(b[1].data||"").localeCompare(a[1].data||""));
+  $("vendTable").innerHTML = rows.length ? `<tr><th>Data</th><th>Cliente</th><th>Titolo</th><th class="n">Q.tà</th><th class="n">Importo</th><th>Incassato</th><th></th></tr>`+
+    rows.map(([id,v])=>`<tr><td>${fmt(v.data)}</td><td>${esc(v.cliente)}${v.nuovo?' <span class="pill ok">nuovo</span>':''}</td><td>${esc(v.tit)}</td><td class="n">${v.q}</td><td class="n">${euro(v.imp)}</td><td><button class="btn sm ${v.inc?"":"ghost"}" data-vinc="${id}">${v.inc?"✓ sì":"no"}</button></td><td><button class="btn ghost sm" data-vdel="${id}">✕</button></td></tr>`).join("")
+    : `<tr><td class="muted">Nessuna vendita registrata.</td></tr>`;
+  const soldBy={}; Object.values(S.vend).forEach(v=>{ soldBy[v.tit]=(soldBy[v.tit]||0)+(num(v.q)||0); });
+  const R=S.inv.righe, sum=R.reduce((a,b)=>a+(num(b.q)||0),0);
+  $("invCheck").innerHTML = !R.length ? "Inventario non ancora compilato (giorni 1–3 del piano)." :
+    (sum===s.stock ? `<span class="okt">✓ Totale contato ${sum} = ${s.stock} dichiarate.</span>` : `<span class="warnt">⚠ Totale contato ${sum} ≠ ${s.stock} dichiarate (differenza ${sum-s.stock}). Verificare.</span>`);
+  $("invTable").innerHTML = R.length ? `<tr><th>Titolo</th><th class="n">Contate</th><th class="n">Vendute</th><th class="n">Residue</th><th class="n">Prezzo</th><th class="n">Valore residuo</th><th></th></tr>`+
+    R.map((r,i)=>{const sd=soldBy[r.t]||0, rs=(num(r.q)||0)-sd; return `<tr><td>${esc(r.t)}</td><td class="n">${r.q??"—"}</td><td class="n">${sd}</td><td class="n">${rs}</td><td class="n">${r.p!=null?euro(r.p):'<span class="warnt">da definire</span>'}</td><td class="n">${r.p!=null?euro(rs*r.p):"—"}</td><td><button class="btn ghost sm" data-idel="${i}">✕</button></td></tr>`;}).join("") : "";
+  $("titoliList").innerHTML = R.map(r=>`<option value="${esc(r.t)}">`).join("");
+}
+function bindTarbal(){
+  $("vAdd").onclick=()=>{
+    const q=num($("vQta").value), data=$("vData").value;
+    if(!q||q<=0||!data){ toast("Inserisci almeno data e quantità"); return; }
+    const id=uid();
+    S.vend[id]={data,cliente:$("vCliente").value.trim(),tit:$("vTitolo").value.trim(),q,imp:num($("vImp").value),inc:$("vInc").checked,nuovo:$("vNuovo").checked};
+    persist("vendite/"+id);
+    ["vCliente","vTitolo","vQta","vImp"].forEach(k=>$(k).value=""); $("vInc").checked=false; $("vNuovo").checked=false;
+    renderTarbal(); renderTiles(); toast("Vendita registrata");
+  };
+  $("iAdd").onclick=()=>{
+    const t=$("iTit").value.trim(); if(!t){ toast("Inserisci il titolo"); return; }
+    S.inv.righe.push({t,q:num($("iQ").value),p:num($("iP").value)});
+    persist("sfida/inventario"); ["iTit","iQ","iP"].forEach(k=>$(k).value=""); renderTarbal();
+  };
+  $("v-tarbal").addEventListener("click",e=>{
+    const b=e.target.closest("button"); if(!b) return;
+    if(b.dataset.vinc){ const v=S.vend[b.dataset.vinc]; v.inc=!v.inc; persist("vendite/"+b.dataset.vinc); renderTarbal(); renderTiles(); }
+    else if(b.dataset.vdel){ if(!armed(b)) return; delete S.vend[b.dataset.vdel]; persist("vendite/"+b.dataset.vdel); renderTarbal(); renderTiles(); }
+    else if(b.dataset.idel!=null){ if(!armed(b)) return; S.inv.righe.splice(+b.dataset.idel,1); persist("sfida/inventario"); renderTarbal(); }
+  });
+}
+
+/* ---------- render: Jisr ---------- */
+function renderJisr(){
+  const s=jisrStats();
+  $("jisrKpis").innerHTML = [
+    [s.done+"/"+s.tot,"attività completate"],[s.late,"attività in ritardo"],
+    [s.base==null?"da definire":s.base,"iscritti iniziali"],[s.att==null?"—":s.att,"iscritti attuali"],
+    [s.rich,"richieste ricevute"],[s.iscr,"nuove iscrizioni"],[s.conv==null?"—":s.conv.toFixed(0)+"%","conversione"],[euro(s.entrate),"nuove entrate (quote)"]
+  ].map(([b,l])=>`<div class="kpi"><b>${b}</b><span>${l}</span></div>`).join("");
+  const t=todayIso(); let last="", html="";
+  JISR_TASKS.slice().sort((a,b)=>a[1].localeCompare(b[1])||a[3]-b[3]).forEach(([id,prog,txt,day])=>{
+    if(prog!==last){ html+=`<div class="sec">${prog}</div>`; last=prog; }
+    const done=S.jisr.done[id], due=dateOf(day), late=!done&&due<t;
+    html+=`<div class="task ${done?"done":""} ${late?"late":""}" data-jt="${id}"><span class="bx">${done?"✓":""}</span><span class="t">${esc(txt)}</span><span class="d">${done?"fatto "+fmt(done):"entro "+fmt(due)}</span></div>`;
+  });
+  $("jisrTasks").innerHTML=html;
+  $("lData").value = $("lData").value || clampDay(cur);
+  const L=Object.entries(S.lead).sort((a,b)=>(b[1].data||"").localeCompare(a[1].data||""));
+  $("leadTable").innerHTML = L.length ? `<tr><th>Data</th><th>Nome</th><th>Canale</th><th>Stato</th><th>Prossimo contatto</th><th class="n">Quota €</th><th></th></tr>`+
+    L.map(([id,x])=>{const lt=x.next&&x.next<t&&x.st!=="Iscritto"&&x.st!=="Non interessato"; return `<tr><td>${fmt(x.data)}</td><td>${esc(x.nome)}<div class="muted" style="font-size:12px">${esc(x.note)}</div></td><td>${esc(x.canale)}</td>
+    <td><select data-lst="${id}">${LEAD_ST.map(o=>`<option ${o===x.st?"selected":""}>${o}</option>`).join("")}</select></td>
+    <td><input type="date" data-lnx="${id}" value="${x.next||""}" ${lt?'style="border-color:var(--bad)"':''}></td>
+    <td><input type="number" min="0" step="0.01" data-lq="${id}" value="${x.quota??""}" style="width:80px" placeholder="—"></td>
+    <td><button class="btn ghost sm" data-ldel="${id}">✕</button></td></tr>`;}).join("")
+    : `<tr><td class="muted">Nessuna richiesta registrata.</td></tr>`;
+}
+function bindJisr(){
+  $("lAdd").onclick=()=>{
+    const nome=$("lNome").value.trim(); if(!nome){ toast("Inserisci il nome"); return; }
+    const id=uid();
+    S.lead[id]={data:$("lData").value||clampDay(cur),nome,canale:$("lCanale").value,note:$("lNote").value.trim(),st:"Nuova richiesta",next:$("lNext").value||"",quota:null};
+    persist("lead/"+id); ["lNome","lNote","lNext"].forEach(k=>$(k).value=""); renderJisr(); renderTiles(); toast("Richiesta registrata");
+  };
+  $("v-jisr").addEventListener("click",e=>{
+    const tk=e.target.closest("[data-jt]");
+    if(tk){ const id=tk.dataset.jt; if(S.jisr.done[id]) delete S.jisr.done[id]; else S.jisr.done[id]=todayIso(); persist("sfida/jisr"); renderJisr(); renderTiles(); return; }
+    const b=e.target.closest("button[data-ldel]"); if(b){ if(!armed(b)) return; delete S.lead[b.dataset.ldel]; persist("lead/"+b.dataset.ldel); renderJisr(); renderTiles(); }
+  });
+  $("v-jisr").addEventListener("change",e=>{
+    const el=e.target;
+    const id=el.dataset.lst||el.dataset.lnx||el.dataset.lq; if(!id||!S.lead[id]) return;
+    if(el.dataset.lst){ S.lead[id].st=el.value; if(el.value==="Iscritto") S.lead[id].iscrittoIl=todayIso(); }
+    if(el.dataset.lnx) S.lead[id].next=el.value;
+    if(el.dataset.lq) S.lead[id].quota=num(el.value);
+    persist("lead/"+id); renderJisr(); renderTiles();
+  });
+}
+
+/* ---------- rapporti ---------- */
+function domainScore(date, amb){
+  const it=itemScores(date).filter(x=>x.amb===amb); if(!it.length) return null;
+  return it.reduce((a,b)=>a+b.sc,0)/it.length*100;
+}
+function weekDays(w){ const [a,b]=WEEKS[w]; const out=[]; for(let n=a;n<=b;n++) out.push(dateOf(n)); return out; }
+function sumNum(days,k){ return days.reduce((a,s)=>a+(num((S.giorni[s]||{num:{}}).num[k])||0),0); }
+function renderRapporti(){
+  const sel=$("weekSel");
+  if(!sel.options.length){ sel.innerHTML=WEEKS.map((w,i)=>`<option value="${i}">${i+1} · ${fmt(dateOf(w[0]))}–${fmt(dateOf(w[1]))} · ${w[2]}</option>`).join(""); sel.value=String(WEEKS.findIndex(w=>dayIndex(cur)>=w[0]&&dayIndex(cur)<=w[1])); }
+  const days=weekDays(+sel.value), logged=days.filter(hasData);
+  $("weekDomains").innerHTML = DOMAINS.map(([k,l])=>{ const v=logged.length?logged.reduce((a,s)=>a+domainScore(s,k),0)/logged.length:null; const c=v==null?"":(v>=85?"okt":v>=65?"warnt":"badt"); return `<div class="kpi"><b class="${c}">${v==null?"—":Math.round(v)+"%"}</b><span>${l}</span></div>`; }).join("");
+  const t=todayIso();
+  $("weekTable").innerHTML = `<tr><th>Giorno</th><th class="n">Compl.</th><th class="n">Hifz</th><th class="n">Ripasso</th><th class="n">Studio h</th><th class="n">Lettura p.</th><th class="n">Tarbal h</th><th class="n">Jisr h</th><th class="n">Sport</th><th class="n">Sonno</th><th class="n">Moschea</th></tr>`+
+    days.map(s=>{const d=S.giorni[s]; const c=d?completion(s).pct+"%":"—"; const g=k=>d&&d.num[k]!=null?d.num[k]:"—"; const m=d?PRAYERS.filter(([k])=>d.pr[k]===2).length+"/5":"—";
+      return `<tr class="${s===t?"today":""}"><td>${dayIndex(s)} · ${fmt(s)}</td><td class="n"><b>${c}</b></td><td class="n">${g("hifz")}</td><td class="n">${g("murajaa")}</td><td class="n">${d?((num(d.num.studio)||0)+(num(d.num.spec)||0))||"—":"—"}</td><td class="n">${g("lettura")}</td><td class="n">${g("tarbal_h")}</td><td class="n">${g("jisr_h")}</td><td class="n">${g("sport")}</td><td class="n">${g("sonno")}</td><td class="n">${m}</td></tr>`;}).join("");
+}
+function dayReport(date){
+  const d=getDay(date,false), c=completion(date), n=dayIndex(date);
+  const L=[]; const g=k=>d.num[k]!=null?d.num[k]:"—"; const x=k=>d.txt[k]?" ("+d.txt[k]+")":"";
+  L.push(`RAPPORTO GIORNALIERO – Giorno ${n}/30 – ${fmt(date)}/2026`);
+  L.push(`Completamento: ${c.pct}% (${c.got.toFixed(1)} su ${c.tot})`);
+  L.push(""); L.push("PRIORITÀ");
+  d.prio.forEach((p,i)=>{ if(p.t) L.push(`${i+1}. [${["da fare","✓ completata","◐ parziale","✗ non completata"][p.s]}] ${p.t}`); });
+  L.push(""); L.push("RISULTATI");
+  L.push(`Corano: memorizzazione ${g("hifz")}${x("hifz")} · ripasso ${g("murajaa")}${x("murajaa")} · lettura ${g("tilawa")} p. · adhkār mattino ${d.adhkar.m?"✓":"✗"} sera ${d.adhkar.s?"✓":"✗"}`);
+  L.push(`Formazione: ${g("studio")} h${x("studio")} · Educazione islamica: ${g("spec")} h${x("spec")}`);
+  L.push(`Lettura: ${g("lettura")} pagine${x("lettura")}`);
+  L.push(`Ore istituzionali: Al-Tarbal ${g("tarbal_h")} h${x("tarbal_h")} · Al-Jisr ${g("jisr_h")} h${x("jisr_h")} (obiettivo 2 + 2)`);
+  L.push(`Salute e famiglia: sport ${g("sport")} min · sonno ${g("sonno")} h · famiglia ${g("famiglia")} min · figli ${g("figli")} min`);
+  const pr=PRAYERS.filter(([k])=>(d.pr[k]||0)>0).length, mo=PRAYERS.filter(([k])=>d.pr[k]===2).length;
+  L.push(`Preghiere: ${pr}/5 (in moschea ${mo}) · Isha in moschea: ${d.pr.isha===2?"sì":"no"}`);
+  const vend=Object.values(S.vend).filter(v=>v.data===date), ts=tarbalStats();
+  L.push(`Al-Tarbal oggi: ${vend.reduce((a,b)=>a+(num(b.q)||0),0)} confezioni, ${euro(vend.reduce((a,b)=>a+(num(b.imp)||0),0))} · residuo totale ${ts.res}/${ts.stock}`);
+  const jt=JISR_TASKS.filter(t=>S.jisr.done[t[0]]===date).map(t=>t[2]);
+  const leadsToday=Object.values(S.lead).filter(l=>l.data===date).length;
+  L.push(`Al-Jisr oggi: attività completate ${jt.length?jt.join("; "):"nessuna"} · nuove richieste ${leadsToday}`);
+  L.push(""); L.push("NON COMPLETATO: "+(c.rest.map(r=>r.l).join(", ")||"nulla"));
+  L.push("OSTACOLI: "+(d.ostacoli||"—"));
+  L.push(""); L.push("PRIORITÀ DI DOMANI"); tomorrowTop3For(date).forEach((t,i)=>L.push(`${i+1}. ${t}`));
+  return L.join("\n");
+}
+function tomorrowTop3For(date){ const d=S.giorni[date]; if(d&&d.domani&&d.domani.some(x=>x&&x.trim())) return d.domani.filter(x=>x&&x.trim()); return suggestDomani(date); }
+function rangeReport(days, title){
+  const logged=days.filter(hasData), L=[];
+  L.push(title); L.push(`Giorni registrati: ${logged.length}/${days.length}`);
+  const avg=logged.length?Math.round(logged.reduce((a,s)=>a+completion(s).pct,0)/logged.length):0;
+  L.push(`Completamento medio: ${avg}%`); L.push(""); L.push("AVANZAMENTO PER AMBITO");
+  DOMAINS.forEach(([k,l])=>{ const v=logged.length?Math.round(logged.reduce((a,s)=>a+domainScore(s,k),0)/logged.length):0; L.push(`- ${l}: ${v}%`); });
+  L.push(""); L.push("TOTALI");
+  NUMS.forEach(([k,l,u])=>L.push(`- ${l}: ${+sumNum(days,k).toFixed(2)} ${u}`));
+  const mo=logged.reduce((a,s)=>a+PRAYERS.filter(([k])=>S.giorni[s].pr[k]===2).length,0);
+  L.push(`- Preghiere in moschea: ${mo} · Isha in moschea: ${logged.filter(s=>S.giorni[s].pr.isha===2).length}/${days.length}`);
+  const ref=todayIso()<days[days.length-1]?todayIso():addDays(days[days.length-1],1);
+  const ts=tarbalStats(), js=jisrStats(ref);
+  const vd=Object.values(S.vend).filter(v=>v.data>=days[0]&&v.data<=days[days.length-1]);
+  L.push(""); L.push("AL-TARBAL");
+  L.push(`- Nel periodo: ${vd.reduce((a,b)=>a+(num(b.q)||0),0)} confezioni · ${euro(vd.reduce((a,b)=>a+(num(b.imp)||0),0))} · nuovi clienti ${vd.filter(v=>v.nuovo).length}`);
+  L.push(`- Totale: venduto ${ts.sold}, residuo ${ts.res}/${ts.stock} (${ts.pct.toFixed(1)}%) · valore ${euro(ts.val)} · incassato ${euro(ts.inc)} · da incassare ${euro(ts.daInc)}`);
+  L.push(""); L.push("AL-JISR");
+  L.push(`- Attività: ${js.done}/${js.tot} completate · ${js.late} in ritardo`);
+  const lateList=JISR_TASKS.filter(t=>!S.jisr.done[t[0]]&&dateOf(t[3])<ref).map(t=>t[1]+": "+t[2]);
+  if(lateList.length) L.push("- In ritardo: "+lateList.join("; "));
+  L.push(`- Iscritti: ${js.base==null?"iniziali da definire":js.base+" → "+js.att} · richieste ${js.rich} · iscrizioni ${js.iscr} · conversione ${js.conv==null?"—":js.conv.toFixed(0)+"%"} · nuove entrate ${euro(js.entrate)}`);
+  const obs=logged.map(s=>S.giorni[s].ostacoli).filter(Boolean);
+  L.push(""); L.push("OSTACOLI REGISTRATI"); obs.length?obs.forEach(o=>L.push("- "+o)):L.push("- nessuno");
+  return L.join("\n");
+}
+function bindRapporti(){
+  $("weekSel").onchange=renderRapporti;
+  $("v-rapporti").addEventListener("click",e=>{
+    const b=e.target.closest("[data-rep]"); if(!b) return; let txt;
+    if(b.dataset.rep==="day") txt=dayReport(cur);
+    else if(b.dataset.rep==="week"){ const w=+$("weekSel").value; txt=rangeReport(weekDays(w),`RAPPORTO SETTIMANALE – Settimana ${w+1} (${fmt(dateOf(WEEKS[w][0]))}–${fmt(dateOf(WEEKS[w][1]))}) · ${WEEKS[w][2]}`); }
+    else { const all=[]; for(let n=1;n<=NDAYS;n++) all.push(dateOf(n)); txt=rangeReport(all,"RAPPORTO FINALE – Sfida 30 giorni (23/11–22/12/2026)"); }
+    $("repOut").textContent=txt; copy(txt);
+  });
+}
+function copy(t){
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>toast("Copiato negli appunti"),()=>selectRep());
+  else selectRep();
+}
+function selectRep(){ const r=document.createRange(); r.selectNodeContents($("repOut")); const s=getSelection(); s.removeAllRanges(); s.addRange(r); toast("Testo selezionato: copialo"); }
+
+/* ---------- piano ---------- */
+function renderPiano(){
+  const t=todayIso(), js=S.jisr.done; let html=`<tr><th>G</th><th>Data</th><th>Al-Tarbal</th><th>Al-Jisr</th><th class="n">Compl.</th></tr>`;
+  WEEKS.forEach((w,wi)=>{
+    html+=`<tr><td colspan="5" class="sec" style="padding-top:12px">Settimana ${wi+1} · ${w[2]}</td></tr>`;
+    for(let n=w[0];n<=w[1];n++){ const s=dateOf(n), p=PLAN[n-1];
+      html+=`<tr class="${s===t?"today":""}"><td>${n}</td><td style="white-space:nowrap">${fmt(s)}</td><td>${esc(p[0])}</td><td>${esc(p[1])}</td><td class="n">${hasData(s)?completion(s).pct+"%":"—"}</td></tr>`; }
+  });
+  $("planTable").innerHTML=html;
+}
+
+/* ---------- impostazioni ---------- */
+function renderImpost(){
+  $("cfgForm").innerHTML = CFG_FIELDS.map(([k,l,ty])=>`<div><label>${l}</label><input type="${ty}" data-cfg="${k}" value="${esc(S.cfg[k]??"")}" ${ty==="number"?'min="0" inputmode="numeric"':''}></div>`).join("");
+  const T=S.cfg.target||{};
+  $("tgtForm").innerHTML = NUMS.map(([k,l,u])=>`<div><label>${l} (${u}/giorno)</label><input type="number" min="0" step="any" data-tgt="${k}" value="${T[k]??""}" placeholder="da definire"></div>`).join("");
+  $("storeInfo").textContent = store.mode==="online" ? "I dati sono salvati online nel tuo spazio privato (visibili solo a te e a Claude quando glielo chiedi) e anche su questo dispositivo." : "I dati sono salvati solo su questo dispositivo/browser. Esporta una copia regolarmente.";
+}
+function bindImpost(){
+  $("v-impost").addEventListener("input",e=>{
+    const el=e.target;
+    if(el.dataset.cfg){ const k=el.dataset.cfg; S.cfg[k]= el.type==="number" ? num(el.value) : el.value; if(k==="stockIniziale"&&S.cfg[k]==null) S.cfg[k]=1500; persist("sfida/config"); }
+    else if(el.dataset.tgt){ S.cfg.target=S.cfg.target||{}; S.cfg.target[el.dataset.tgt]=num(el.value); persist("sfida/config"); }
+  });
+  $("expBtn").onclick=()=>{
+    const json=JSON.stringify(S,null,1);
+    if(window.top===window){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([json],{type:"application/json"})); a.download="sfida30-"+todayIso()+".json"; a.click(); return; }
+    const done=()=>toast("Dati copiati: incollali in un file .json"), fail=()=>toast("Copia non riuscita");
+    (navigator.clipboard&&navigator.clipboard.writeText)?navigator.clipboard.writeText(json).then(done,fail):fail();
+  };
+  $("impFile").onchange=e=>{
+    const f=e.target.files[0]; if(!f) return;
+    f.text().then(t=>{ const d=JSON.parse(t); if(!d.cfg||!d.giorni) throw 0; S=Object.assign(emptyState(),d); persistAll(); renderAll(); toast("Dati importati"); }).catch(()=>toast("File non valido"));
+  };
+}
+
+/* ---------- navigazione ---------- */
+function renderTab(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===tab));
+  ["oggi","tarbal","jisr","rapporti","piano","impost"].forEach(t=>$("v-"+t).classList.toggle("hide",t!==tab));
+  ({oggi:renderOggi,tarbal:renderTarbal,jisr:renderJisr,rapporti:renderRapporti,piano:renderPiano,impost:renderImpost})[tab]();
+}
+function renderAll(){ renderHeader(); renderTab(); }
+function armed(b){ if(b.dataset.armed){ return true; } b.dataset.armed="1"; const old=b.textContent; b.textContent="Elimina?"; b.classList.remove("ghost"); setTimeout(()=>{ if(b.isConnected){ delete b.dataset.armed; b.textContent=old; b.classList.add("ghost"); } },3000); return false; }
+let toastT; function toast(t){ const el=$("toast"); el.textContent=t; el.classList.add("show"); clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),1800); }
+
+$("tabs").onclick=e=>{ const b=e.target.closest("button"); if(!b) return; tab=b.dataset.t; renderTab(); window.scrollTo(0,0); };
+$("prevDay").onclick=()=>{ if(cur>START){ cur=addDays(cur,-1); $("vData").value=""; $("lData").value=""; renderAll(); } };
+$("nextDay").onclick=()=>{ if(cur<END){ cur=addDays(cur,1); $("vData").value=""; $("lData").value=""; renderAll(); } };
+bindOggi(); bindTarbal(); bindJisr(); bindRapporti(); bindImpost();
+if(todayIso()<START) showBanner("La sfida inizia lunedì 23 novembre 2026. Puoi già compilare le Impostazioni e l'inventario.", true);
+initStore();
+</script>
+</body>
+</html>
