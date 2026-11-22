@@ -268,7 +268,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
         <input id="gsearch" type="search" placeholder="Cerca clienti, prodotti, telefono…" autocomplete="off" aria-label="Cerca ovunque">
         <div class="gresults" id="gresults" hidden></div>
       </div>
-      <div class="top-right"><span id="sync"></span>
+      <div class="top-right"><span id="sync"></span><button class="btn sm" type="button" id="lockbtn" data-act="lock" hidden>Blocca</button>
         <button class="iconbtn" type="button" data-act="go" data-v="approvazioni" aria-label="Approvazioni in attesa" id="appr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg></button>
         <button class="iconbtn" type="button" data-act="notif" aria-label="Notifiche" id="notif-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
         <div class="user">
@@ -526,6 +526,7 @@ function seed(){
 }
 const KEY='crmibra_demo_v3';
 let S;
+try{if(sessionStorage.getItem('crmibra_role')===null&&false){}}catch(e){}
 if(!REALE)try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===3&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
 if(!S)S=REALE?null:seed();
 function save(){if(REALE){scheduleSync();return}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
@@ -625,7 +626,7 @@ function renderNav(){
   $('#appr-btn').innerHTML=$('#appr-btn').innerHTML.replace(/<span class="dot">.*?<\/span>/,'')+(pa?`<span class="dot">${pa}</span>`:'');
   const nn=S.notifiche.filter(n=>!n.letta).length;
   $('#notif-btn').innerHTML=$('#notif-btn').innerHTML.replace(/<span class="dot">.*?<\/span>/,'')+(nn?`<span class="dot">${nn}</span>`:'');
-  const sy=document.getElementById('sync');if(sy)sy.innerHTML=syncHtml();const li=document.getElementById('logo-img');if(li&&li.getAttribute('src')!==LOGO())li.src=LOGO();const ln=document.getElementById('logo-name');if(ln)ln.textContent=INSEGNA();const me=ME();$('#avatar').textContent=me.ini;$('#who-name').textContent=me.nome;$('#role').value=UI.role;
+  const lb=document.getElementById('lockbtn');if(lb)lb.hidden=!(UI.role==='titolare'&&hasPin());const sy=document.getElementById('sync');if(sy)sy.innerHTML=syncHtml();const li=document.getElementById('logo-img');if(li&&li.getAttribute('src')!==LOGO())li.src=LOGO();const ln=document.getElementById('logo-name');if(ln)ln.textContent=INSEGNA();const me=ME();$('#avatar').textContent=me.ini;$('#who-name').textContent=me.nome;$('#role').value=UI.role;
 }
 function render(){
   if(REALE&&SYNC.st==='carico'){$('#view').innerHTML='<div class="empty" style="padding:80px"><h2>Caricamento dei dati del negozio…</h2><p class="muted">Collegamento all\'archivio privato in corso.</p></div>';return}
@@ -663,6 +664,7 @@ VIEWS.cruscotto=()=>{
   if(ur)alerts.push(['info',`<b>${ur} messaggi WhatsApp da leggere</b>`,'whatsapp','Apri']);
   if(pa.length)alerts.push(['warn',`<b>${pa.length} approvazioni in attesa</b> · ${esc(pa[0].titolo)}`,'approvazioni','Valuta']);
   if(poIn.length)alerts.push(['info',`<b>${poIn.length} ordine fornitore in arrivo</b> · ${esc(forn(poIn[0].forn).nome)} il ${fD(poIn[0].consegna)}`,'ordini','Dettagli']);
+  if(REALE&&isTit()&&!hasPin())alerts.unshift(['bad','<b>Imposta il PIN del titolare</b> · senza PIN chiunque usi questo dispositivo può entrare come titolare e azzerare i dati','impostazioni','Imposta PIN']);
   {const y=daysAgo(1);if(crmDay(y).n&&!S.chiusureRT.some(x=>dayStart(x.giorno).getTime()===y.getTime()))alerts.push(['warn','<b>Manca la chiusura dell\'RT di ieri</b> · inseriscila per controllare i corrispettivi','vendite','Inserisci'])}
   if(isTit()){const dov=[...S.fatture,...S.spese].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=7);const scd=dov.filter(x=>diffDays(x.scadenza,NOW)<0);if(dov.length)alerts.push([scd.length?'bad':'warn',`<b>${dov.length} pagamenti entro 7 giorni${scd.length?' ('+scd.length+' già scaduti)':''}</b> · totale ${eur(sum(dov,x=>x.tot))}`,'spese','Scadenzario'])}
   const last=today.slice(-6).reverse();
@@ -1439,6 +1441,7 @@ VIEWS.impostazioni=()=>{
    <div class="field"><label for="st-or">Importo ordine fornitore oltre cui serve approvazione (€)</label><input id="st-or" class="num" value="${I.ordineSoglia/100}"></div>
    <div class="field"><label for="st-mm">Messaggi promozionali al mese per cliente</label><input id="st-mm" class="num" value="${I.limiteMsgMese}"></div>
    <button class="btn primary" data-act="saveSet" ${isTit()?'':'disabled'}>Salva soglie</button></div></div>
+  <div class="card"><div class="card-h"><h2>Sicurezza</h2>${hasPin()?'<span class="chip ok">PIN attivo</span>':'<span class="chip bad">Nessun PIN</span>'}</div><div class="card-b stack" style="gap:10px"><div class="small">Il <b>PIN del titolare</b> serve per entrare come titolare, azzerare i dati e ripristinare un backup. Dopo ${LOCK_MIN} minuti senza attività si torna automaticamente "Addetto vendite".</div><div class="actions"><button class="btn primary" data-act="pinSet" ${isTit()?'':'disabled'}>${hasPin()?'Cambia PIN':'Imposta PIN'}</button>${hasPin()?`<button class="btn danger" data-act="pinDel" ${isTit()?'':'disabled'}>Rimuovi PIN</button>`:''}</div></div></div>
   <div class="card"><div class="card-h"><h2>Aspetto e lingua</h2></div><div class="card-b stack" style="gap:10px"><div class="field"><label>Tema</label><div class="seg"><button data-act="theme" data-v="">Automatico</button><button data-act="theme" data-v="light">Chiaro</button><button data-act="theme" data-v="dark">Scuro</button></div></div><div class="field"><label for="st-l">Lingua</label><select id="st-l"><option>Italiano</option><option disabled>English (prossimamente)</option><option disabled>العربية (prossimamente)</option></select></div></div></div>
   ${REALE?`<div class="card"><div class="card-h"><h2>Backup e azzeramento</h2></div><div class="card-b stack" style="gap:10px"><div class="small">I dati sono salvati nell'archivio privato del tuo account e si vedono da ogni dispositivo dove apri questa pagina. Scarica comunque un backup ogni settimana.</div><button class="btn primary" data-act="backup">Scarica backup</button><label class="btn" for="bk-file" style="justify-content:center">Ripristina da backup</label><input id="bk-file" type="file" accept=".json,application/json" hidden><button class="btn danger" data-act="resetAll" ${isTit()?'':'disabled'}>Azzera tutti i dati</button></div></div></div>`:`<div class="card"><div class="card-h"><h2>Dati dimostrativi</h2></div><div class="card-b stack" style="gap:10px"><div class="small">Le modifiche fatte in questa demo restano solo nel tuo browser fino a fine giornata. Puoi ripartire da zero in qualsiasi momento.</div><button class="btn danger" data-act="reset">Reimposta dati dimostrativi</button></div></div></div>`}`;
 };
@@ -1508,7 +1511,7 @@ async function initCloud(){
       if(c==='meta'){if(b.impostazioni)S.impostazioni=b.impostazioni;S.syncDone=b.syncDone}
       else if(DAILY.includes(c))(b.items||[]).forEach(it=>S[c].push(JSON.parse(JSON.stringify(it))));
       else S[c].push(JSON.parse(JSON.stringify(b.item)))}});
-    sortState();clearTimeout(timer);setSync('ok');render();
+    sortState();clearTimeout(timer);setSync('ok');if(UI.role==='titolare'&&!isUnlocked())UI.role='addetto';render();
     colls.forEach(c=>DB.collection(c).onSnapshot(sn=>applyRemote(c,sn),e=>{if(e&&e.code==='revoked')setSync('off','Accesso all\'archivio revocato.')}));
     scheduleSync();
   }catch(e){clearTimeout(timer);setSync('off','Errore di caricamento ('+(e&&e.code||'sconosciuto')+').');render()}
@@ -1527,7 +1530,7 @@ function restoreBackup(file){
   file.text().then(t=>{let x;try{x=JSON.parse(t)}catch(e){toast('Il file non è un backup valido.','warn');return}const d=x&&x.dati;if(!d||!Array.isArray(d.vendite)||!Array.isArray(d.clienti)){toast('Il file non è un backup di CRM IBRA.','warn');return}
     ask('Ripristinare il backup?',`Backup del ${fDT(x.creato)}: ${d.clienti.length} clienti, ${d.prodotti.length} prodotti, ${d.vendite.length} vendite.<br>I dati attuali verranno <b>sostituiti</b>.`,'Ripristina',()=>{S=Object.assign(emptyState(),d);sortState();log('Ripristino','Ripristinato backup del '+fDT(x.creato));render();toast('Backup ripristinato.')},true)});
 }
-document.addEventListener('change',e=>{if(e.target.id==='bk-file'&&e.target.files[0])restoreBackup(e.target.files[0])});
+document.addEventListener('change',e=>{if(e.target.id==='bk-file'&&e.target.files[0]){const f=e.target.files[0];withPin('PIN per ripristinare un backup',()=>restoreBackup(f))}});
 
 /* ---- Prodotti: nuova scheda e modifica ---- */
 const UNITA=['kg','pz','mazzo','conf','cassetta'];
@@ -1563,7 +1566,7 @@ function caricoModal(pid){
     if(c)p.costo=c;S.movimenti.push({id:uid('M'),data:new Date().toISOString(),tipo:'carico',prod:p.id,q,motivo:val('cm-d')||'Carico manuale',utente:ME().nome,lotto:lid});
     log('Carico merce',`${p.nome} · ${fmtQ(q,p.unita)}`);render();toast('Merce caricata in magazzino.')}}],true);
 }
-const REAL_ACTIONS={newProd:()=>productForm(null),editProd:d=>productForm(prod(d.v)),carico:d=>caricoModal(d.v||''),backup:backupDownload,resetAll};
+const REAL_ACTIONS={newProd:()=>productForm(null),editProd:d=>productForm(prod(d.v)),carico:d=>caricoModal(d.v||''),backup:backupDownload,resetAll:()=>withPin('PIN per azzerare i dati',resetAll)};
 
 /* ============ Marchio e documenti PDF ============ */
 const LOGO=()=>(S&&S.impostazioni&&S.impostazioni.logo)||DEFAULT_LOGO;
@@ -1660,6 +1663,29 @@ const DOC_ACTIONS={
   saveAz:()=>{const I=S.impostazioni;I.insegna=val('st-n')||'Ortofrutta Ibra';I.indirizzo=val('st-c');I.piva=val('st-pi');I.tel=val('st-tel');I.rt=val('st-rt');log('Impostazioni','Dati dell\'attività aggiornati');render();toast('Dati dell\'attività salvati.')}
 };
 
+/* ============ PIN del titolare ============ */
+const LOCK_MIN=15;let UNLOCK_MEM=0,PINFAIL=0,PINWAIT=0;
+async function hashPin(pin,salt){const h=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(salt+':'+pin));return [...new Uint8Array(h)].map(b=>b.toString(16).padStart(2,'0')).join('')}
+const hasPin=()=>!!(S&&S.impostazioni&&S.impostazioni.pinHash);
+function unlockTs(){try{return +sessionStorage.getItem('crmibra_unlock')||UNLOCK_MEM}catch(e){return UNLOCK_MEM}}
+function setUnlock(t){UNLOCK_MEM=t;try{sessionStorage.setItem('crmibra_unlock',String(t))}catch(e){}}
+const isUnlocked=()=>!hasPin()||Date.now()-unlockTs()<LOCK_MIN*6e4;
+function askPin(title,ok){
+  if(Date.now()<PINWAIT){toast('Troppi tentativi: riprova tra '+Math.ceil((PINWAIT-Date.now())/1000)+' secondi.','warn');return}
+  openModal(title,`<div class="field"><label for="pin-in">PIN del titolare</label><input id="pin-in" type="password" inputmode="numeric" autocomplete="off" maxlength="8" style="font-size:24px;letter-spacing:.35em;text-align:center"></div><div class="small muted">Chi non conosce il PIN non può accedere come titolare.</div>`,
+  [{label:'Annulla'},{label:'Conferma',cls:'primary',fn:()=>{const v=val('pin-in');hashPin(v,S.impostazioni.pinSalt).then(h=>{if(h===S.impostazioni.pinHash){PINFAIL=0;setUnlock(Date.now());closeModal();ok()}else{PINFAIL++;if(PINFAIL>=5){PINWAIT=Date.now()+60000;PINFAIL=0;closeModal();log('Sicurezza','5 tentativi di PIN errati','Sistema');toast('PIN errato per 5 volte: bloccato per 1 minuto.','warn')}else{toast('PIN errato.','warn');const i=document.getElementById('pin-in');if(i){i.value='';i.focus()}}}});return false}}]);
+}
+function withPin(title,fn){if(hasPin())askPin(title,fn);else fn()}
+function setRole(r,quiet){UI.role=r;try{sessionStorage.setItem('crmibra_role',r)}catch(_){}UI.aiMsgs=[];if(!quiet)log('Cambio utente','Accesso come '+ME().nome+' ('+ME().ruolo+')');if(!allowed(location.hash.slice(1)))location.hash='cruscotto';render();if(!quiet)toast('Ora stai usando il sistema come '+ME().ruolo+'.')}
+function pinModal(){
+  const nuovo=()=>openModal(hasPin()?'Cambia PIN del titolare':'Imposta il PIN del titolare',`<div class="small">Scegli un PIN di 4–8 cifre che conosci solo tu. Servirà per entrare come titolare, azzerare i dati e ripristinare un backup.</div><div class="grid g2"><div class="field"><label for="pn1">Nuovo PIN</label><input id="pn1" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div><div class="field"><label for="pn2">Ripeti il PIN</label><input id="pn2" type="password" inputmode="numeric" maxlength="8" autocomplete="new-password"></div></div><div class="small muted">Se dimentichi il PIN non c'è modo di recuperarlo dall'app: annotalo in un posto sicuro.</div>`,
+    [{label:'Annulla'},{label:'Salva PIN',cls:'primary',fn:()=>{const a=val('pn1'),b=val('pn2');if(!/^\d{4,8}$/.test(a)){toast('Il PIN deve avere da 4 a 8 cifre.','warn');return false}if(a!==b){toast('I due PIN non coincidono.','warn');return false}if(/^(\d)\1+$/.test(a)||'0123456789'.includes(a)||'9876543210'.includes(a)){toast('PIN troppo facile: evita cifre uguali o in sequenza.','warn');return false}
+      const salt=Math.random().toString(36).slice(2)+Date.now().toString(36);hashPin(a,salt).then(h=>{S.impostazioni.pinSalt=salt;S.impostazioni.pinHash=h;setUnlock(Date.now());log('Sicurezza','PIN del titolare impostato');render();toast('PIN salvato. Da ora serve per entrare come titolare.')});}}]);
+  if(hasPin())askPin('Conferma il PIN attuale',nuovo);else nuovo();
+}
+setInterval(()=>{if(UI.role==='titolare'&&hasPin()&&!isUnlocked()){setRole('addetto',true);toast('Sessione del titolare chiusa per inattività.','warn')}},30000);
+document.addEventListener('click',()=>{if(UI.role==='titolare'&&hasPin()&&isUnlocked())setUnlock(Date.now())},true);
+const PIN_ACTIONS={pinSet:pinModal,pinDel:()=>askPin('Rimuovi il PIN',()=>{delete S.impostazioni.pinHash;delete S.impostazioni.pinSalt;log('Sicurezza','PIN del titolare rimosso');render();toast('PIN rimosso.','warn')}),lock:()=>{setUnlock(0);setRole('addetto',true);toast('Bloccato: per tornare titolare serve il PIN.')}};
 /* ============ Azioni ============ */
 const A={
   go:d=>{location.hash=d.v;if(current()===d.v)render()},
@@ -1747,14 +1773,14 @@ document.addEventListener('keydown',e=>{
   if(e.key==='Escape')closeModal();
   if(e.key==='Enter'){if(e.target.id==='ai-in')aiAsk(e.target.value);if(e.target.id==='wa-in'){const b=document.querySelector('[data-act="waSend"]');b&&b.click()}if(e.target.id==='cassa-q'){const t=document.querySelector('.tile');t&&t.click()}}
 });
-$('#role').addEventListener('change',e=>{UI.role=e.target.value;try{sessionStorage.setItem('crmibra_role',UI.role)}catch(_){}UI.aiMsgs=[];log('Cambio utente','Accesso come '+ME().nome+' ('+ME().ruolo+')');if(!allowed(location.hash.slice(1)))location.hash='cruscotto';render();toast('Ora stai usando il sistema come '+ME().ruolo+'.')});
+$('#role').addEventListener('change',e=>{const r=e.target.value;if(r==='titolare'&&!isUnlocked()){e.target.value=UI.role;askPin('Accesso come titolare',()=>setRole('titolare'));return}setRole(r)});
 $('#gsearch').addEventListener('input',e=>{
   const q=norm(e.target.value).replace(/\s/g,'');const box=$('#gresults');if(!q){box.hidden=true;return}
   const cs=S.clienti.filter(c=>!c.anon&&norm(cliNome(c)+c.tel).replace(/\s/g,'').includes(q)).slice(0,5);
   const ps=S.prodotti.filter(p=>norm(p.nome).replace(/\s/g,'').includes(q)||p.plu===q).slice(0,5);
   box.innerHTML=(cs.map(c=>`<button data-act="gC" data-v="${c.id}"><span class="avatar" style="width:24px;height:24px;font-size:10px">${ini(c)}</span>${esc(cliNome(c))}<span class="muted small" style="margin-left:auto">Cliente</span></button>`).join('')+ps.map(p=>`<button data-act="gP" data-v="${p.id}"><span style="width:10px;height:10px;border-radius:50%;background:${CAT_COL[p.cat]}"></span>${esc(p.nome)} <span class="muted small">${eur(p.prezzo)}/${p.unita}</span><span class="muted small" style="margin-left:auto">Prodotto</span></button>`).join(''))||'<div class="empty small">Nessun risultato</div>';box.hidden=false;
 });
-Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS,REAL_ACTIONS,DOC_ACTIONS,{rtClose:rtCloseModal});
+Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS,REAL_ACTIONS,DOC_ACTIONS,PIN_ACTIONS,{rtClose:rtCloseModal});
 A.gC=d=>{$('#gresults').hidden=true;$('#gsearch').value='';cliModal(d.v)};
 A.gP=d=>{$('#gresults').hidden=true;$('#gsearch').value='';prodModal(d.v)};
 try{const t=localStorage.getItem('crmibra_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
