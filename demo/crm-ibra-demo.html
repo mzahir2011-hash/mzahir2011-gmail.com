@@ -55,6 +55,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 
 /* Struttura */
 .demo-banner{background:var(--citrus);color:#fff;font-weight:600;font-size:12.5px;padding:6px 16px;display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap;text-align:center}
+.demo-banner.real{background:var(--brand-2)}
 .demo-banner button{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.5);color:#fff;border-radius:6px;padding:2px 10px;cursor:pointer;font-size:12px}
 .app{display:grid;grid-template-columns:244px 1fr;height:calc(100% - 32px)}
 .side{background:var(--brand);color:var(--brand-ink);display:flex;flex-direction:column;overflow-y:auto}
@@ -248,7 +249,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 </style>
 </head>
 <body>
-<div class="demo-banner" role="status">
+<div class="demo-banner" role="status" id="banner">
   <span>DATI DIMOSTRATIVI · prodotti, clienti, prezzi e vendite sono inventati a scopo di prova. Nessun messaggio, pagamento o scontrino viene realmente inviato.</span>
   <button type="button" data-act="reset">Reimposta demo</button>
 </div>
@@ -266,7 +267,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
         <input id="gsearch" type="search" placeholder="Cerca clienti, prodotti, telefono…" autocomplete="off" aria-label="Cerca ovunque">
         <div class="gresults" id="gresults" hidden></div>
       </div>
-      <div class="top-right">
+      <div class="top-right"><span id="sync"></span>
         <button class="iconbtn" type="button" data-act="go" data-v="approvazioni" aria-label="Approvazioni in attesa" id="appr-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3 8-8M20 12v7a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1h11"/></svg></button>
         <button class="iconbtn" type="button" data-act="notif" aria-label="Notifiche" id="notif-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg></button>
         <div class="user">
@@ -288,6 +289,7 @@ table.tbl{width:100%;border-collapse:collapse;font-size:13px}
 
 <script>
 "use strict";
+const MODE='demo';const REALE=MODE==='reale';
 /* ============ Utilità ============ */
 const $=s=>document.querySelector(s);
 const fmtE=new Intl.NumberFormat('it-IT',{style:'currency',currency:'EUR'});
@@ -522,9 +524,9 @@ function seed(){
 }
 const KEY='crmibra_demo_v3';
 let S;
-try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===3&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
-if(!S)S=seed();
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+if(!REALE)try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===3&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
+if(!S)S=REALE?null:seed();
+function save(){if(REALE){scheduleSync();return}try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 /* ============ Stato interfaccia ============ */
 const UI={role:'titolare',cassaCat:'Tutti',cassaQ:'',cart:[],cartCliente:null,cartSconto:0,venditeP:'oggi',venditeQ:'',clientiQ:'',clientiSeg:'Tutti',magTab:'giacenze',ordTab:'clienti',waSel:'W1',periodo:30,aiMsgs:[],prodQ:'',acqTab:'fatture',acqStato:'Tutte',acqForn:'',speseCat:'Tutte',speseStato:'Tutte',cePer:'mese'};
@@ -536,7 +538,7 @@ const ADDETTO=['cruscotto','cassa','vendite','clienti','fedelta','whatsapp','pro
 /* ============ Funzioni di dominio ============ */
 const prod=id=>S.prodotti.find(p=>p.id===id);
 const cli=id=>S.clienti.find(c=>c.id===id);
-const forn=id=>S.fornitori.find(f=>f.id===id);
+const forn=id=>S.fornitori.find(f=>f.id===id)||{id:'',nome:'Nessun fornitore',tipo:'',contatto:'—',tel:'—',email:'—',giorni:'—',pagamento:'Rimessa diretta',qualita:null,puntualita:null};
 const cliNome=c=>c?(c.tipo==='azienda'?c.nome:c.nome+' '+c.cognome):'Cliente non identificato';
 const ini=c=>c?(c.nome[0]+(c.tipo==='azienda'?(c.nome.split(' ')[1]||'')[0]||'':c.cognome[0])).toUpperCase():'?';
 const giacenza=pid=>S.lotti.filter(l=>l.prod===pid).reduce((s,l)=>s+l.res,0);
@@ -593,7 +595,7 @@ function hbars(rows,fmt=eur){const max=Math.max(1,...rows.map(r=>r.v));return ro
 /* ============ Modale, notifiche, conferme ============ */
 let MB=[];
 function openModal(title,body,buttons=[],wide=false){
-  MB=buttons;const m=$('#modal');m.className='modal'+(wide?' wide':'');
+  buttons=buttons.filter(Boolean);MB=buttons;const m=$('#modal');m.className='modal'+(wide?' wide':'');
   m.innerHTML=`<div class="modal-h"><h2>${esc(title)}</h2><button class="iconbtn" data-act="mclose" aria-label="Chiudi">✕</button></div><div class="modal-b">${body}</div>${buttons.length?`<div class="modal-f">${buttons.map((b,i)=>`<button type="button" class="btn ${b.cls||''}" data-act="mbtn" data-i="${i}" ${b.dis?'disabled':''}>${esc(b.label)}</button>`).join('')}</div>`:''}`;
   $('#overlay').classList.add('show');const f=m.querySelector('input,select,textarea');if(f)setTimeout(()=>f.focus(),30);
 }
@@ -613,7 +615,7 @@ const NAV=[
   ['Analisi',[['analisi','Performance e report','chart'],['assistente','Assistente AI','spark']]],
   ['Sistema',[['automazioni','Automazioni','bolt'],['approvazioni','Approvazioni','check'],['registro','Registro attività','list'],['impostazioni','Impostazioni','gear']]]
 ];
-const allowed=v=>isTit()||ADDETTO.includes(v);
+const allowed=v=>!(REALE&&['whatsapp','campagne','automazioni'].includes(v))&&(isTit()||ADDETTO.includes(v));
 function current(){const h=location.hash.replace('#','');const all=NAV.flatMap(g=>g[1].map(i=>i[0]));return all.includes(h)&&allowed(h)?h:'cruscotto'}
 function renderNav(){
   const cur=current();const pa=pendingAppr().length,ur=unread();
@@ -621,9 +623,11 @@ function renderNav(){
   $('#appr-btn').innerHTML=$('#appr-btn').innerHTML.replace(/<span class="dot">.*?<\/span>/,'')+(pa?`<span class="dot">${pa}</span>`:'');
   const nn=S.notifiche.filter(n=>!n.letta).length;
   $('#notif-btn').innerHTML=$('#notif-btn').innerHTML.replace(/<span class="dot">.*?<\/span>/,'')+(nn?`<span class="dot">${nn}</span>`:'');
-  const me=ME();$('#avatar').textContent=me.ini;$('#who-name').textContent=me.nome;$('#role').value=UI.role;
+  const sy=document.getElementById('sync');if(sy)sy.innerHTML=syncHtml();const me=ME();$('#avatar').textContent=me.ini;$('#who-name').textContent=me.nome;$('#role').value=UI.role;
 }
 function render(){
+  if(REALE&&SYNC.st==='carico'){$('#view').innerHTML='<div class="empty" style="padding:80px"><h2>Caricamento dei dati del negozio…</h2><p class="muted">Collegamento all\'archivio privato in corso.</p></div>';return}
+  if(REALE)scheduleSync();
   const v=current();renderNav();
   const html=(VIEWS[v]||VIEWS.cruscotto)();
   $('#view').innerHTML=html;$('#side').classList.remove('open');
@@ -696,7 +700,7 @@ VIEWS.cassa=()=>{
       <span class="muted small">Operatore: <b>${ME().nome}</b> · Cassa 1</span>
     </div>
     <div class="cats">${cats.map(k=>`<button data-act="cassaCat" data-v="${k}" class="${UI.cassaCat===k&&!UI.cassaQ?'on':''}">${k}</button>`).join('')}</div>
-    <div class="tiles">${ps.map(p=>{const g=giacenza(p.id);return `<button class="tile" style="--c:${CAT_COL[p.cat]}" data-act="addP" data-v="${p.id}"><b>${esc(p.nome)}</b><span class="s">PLU ${p.plu} · ${esc(p.origine.replace('Italia – ',''))}</span><span class="p">${eur(p.prezzo)}<span class="s"> /${p.unita}</span></span><span class="s" style="color:${g<p.soglia?'var(--bad)':'var(--muted)'}">Giacenza ${fmtQ(g,p.unita)}</span></button>`}).join('')||'<div class="empty">Nessun prodotto trovato</div>'}</div>
+    <div class="tiles">${ps.map(p=>{const g=giacenza(p.id);return `<button class="tile" style="--c:${CAT_COL[p.cat]}" data-act="addP" data-v="${p.id}"><b>${esc(p.nome)}</b><span class="s">PLU ${p.plu} · ${esc(p.origine.replace('Italia – ',''))}</span><span class="p">${eur(p.prezzo)}<span class="s"> /${p.unita}</span></span><span class="s" style="color:${g<p.soglia?'var(--bad)':'var(--muted)'}">Giacenza ${fmtQ(g,p.unita)}</span></button>`}).join('')||(S.prodotti.length?'<div class="empty">Nessun prodotto trovato</div>':'<div class="empty">Non ci sono ancora prodotti.<br><button class="btn primary" data-act="newProd" style="margin-top:10px">Crea il primo prodotto</button></div>')}</div>
   </div>
   <div class="card cart">
     <div class="card-h"><h2>Scontrino in corso</h2>${UI.cart.length?`<button class="btn sm" data-act="cartClear">Svuota</button>`:''}</div>
@@ -715,7 +719,7 @@ function weightModal(p){
   let w='';
   const body=()=>`<div class="muted small">${esc(p.nome)} · ${eur(p.prezzo)}/kg · origine ${esc(p.origine)}</div><div class="weight" id="wv">${w?w.replace('.',','):'0,000'} kg</div><div class="small" id="wtot" style="text-align:center">Importo: <b class="num">${eur(Math.round((parseFloat(w)||0)*p.prezzo))}</b></div>
   <div class="keypad">${['7','8','9','4','5','6','1','2','3',',','0','C'].map(k=>`<button type="button" data-act="kp" data-v="${k}">${k}</button>`).join('')}</div>
-  <button class="btn" data-act="kp" data-v="scale" style="justify-content:center">Leggi dalla bilancia (simulata)</button>`;
+  ${REALE?'':'<button class="btn" data-act="kp" data-v="scale" style="justify-content:center">Leggi dalla bilancia (simulata)</button>'}`;
   openModal('Peso',body(),[{label:'Annulla'},{label:'Aggiungi',cls:'primary',fn:()=>{const q=parseFloat(w);if(!q||q<=0){toast('Inserisci un peso maggiore di zero.','warn');return false}UI.cart.push({p:p.id,q:Math.round(q*1000)/1000,pr:p.prezzo});render()}}]);
   KP=k=>{if(k==='C')w='';else if(k==='scale')w=(Math.round((.35+Math.random()*1.9)*200)/200).toFixed(3);else if(k===','){if(!w.includes('.'))w=(w||'0')+'.'}else{if((w.split('.')[1]||'').length<3&&w.length<6)w+=k}
     $('#wv').textContent=(w?w.replace('.',','):'0,000')+' kg';$('#wtot').innerHTML=`Importo: <b class="num">${eur(Math.round((parseFloat(w)||0)*p.prezzo))}</b>`};
@@ -796,7 +800,7 @@ function rtCloseModal(){
   <div class="grid g2"><div class="field"><label for="rt-t">Totale corrispettivi della giornata (€)</label><input id="rt-t" class="num" inputmode="decimal" value="${z?(z.rt/100).toFixed(2).replace('.',','):''}" placeholder="es. 486,30"></div><div class="field"><label for="rt-z">Numero chiusura</label><input id="rt-z" class="num" value="${z?z.z:last+1}"></div></div>
   <div class="field"><label for="rt-n">Numero di documenti commerciali (facoltativo)</label><input id="rt-n" class="num" inputmode="numeric"></div>
   <label class="btn" for="rt-foto" style="justify-content:center">${ic('scan',15)} Fotografa lo scontrino di chiusura</label><input id="rt-foto" type="file" accept="image/*" hidden>
-  <div class="small muted" id="rt-foto-msg">Nella versione completa il totale viene letto dalla foto. In questa demo la lettura è simulata.</div>
+  <div class="small muted" id="rt-foto-msg">${REALE?'La lettura automatica della foto non è ancora attiva.':'Nella versione completa il totale viene letto dalla foto. In questa demo la lettura è simulata.'}</div>
   <div class="tot-row" style="border-top:1px solid var(--line);padding-top:10px"><span>Vendite registrate oggi nel CRM</span><b class="num">${eur(c.tot)} · ${c.n} scontrini</b></div>`,
   [{label:'Annulla'},{label:'Salva e confronta',cls:'primary',fn:()=>{const v=Math.round(parseFloat(val('rt-t').replace(/\./g,'').replace(',','.'))*100);if(isNaN(v)||v<0){toast('Inserisci il totale della chiusura dell\'RT.','warn');return false}
     const rec={giorno:daysAgo(0).toISOString(),z:+val('rt-z')||last+1,rt:v,docs:val('rt-n')?+val('rt-n'):null,nota:'',utente:ME().nome,fonte:RTFOTO?'Foto della chiusura':'Inserita a mano'};
@@ -805,7 +809,7 @@ function rtCloseModal(){
     log('Chiusura RT',`Chiusura n. ${rec.z} · RT ${eur(v)} · CRM ${eur(c.tot)} · differenza ${eur(df)}`);render();toast(df===0?'Chiusura registrata: i totali coincidono.':'Chiusura registrata con una differenza di '+eur(df)+'.',df===0?'ok':'warn')}}]);
 }
 let RTFOTO=false;
-document.addEventListener('change',e=>{if(e.target.id==='rt-foto'&&e.target.files[0]){RTFOTO=true;const c=crmDay(daysAgo(0));const i=document.getElementById('rt-t');if(i)i.value=(c.tot/100).toFixed(2).replace('.',',');const n=document.getElementById('rt-n');if(n)n.value=c.n;const m=document.getElementById('rt-foto-msg');if(m)m.innerHTML='<b>Foto caricata:</b> '+esc(e.target.files[0].name)+'. Valori letti (simulati): controllali con lo scontrino prima di salvare.'}});
+document.addEventListener('change',e=>{if(e.target.id==='rt-foto'&&e.target.files[0]&&REALE){RTFOTO=true;const m=document.getElementById('rt-foto-msg');if(m)m.innerHTML='<b>Foto allegata.</b> Copia il totale dallo scontrino di chiusura.';return}if(e.target.id==='rt-foto'&&e.target.files[0]){RTFOTO=true;const c=crmDay(daysAgo(0));const i=document.getElementById('rt-t');if(i)i.value=(c.tot/100).toFixed(2).replace('.',',');const n=document.getElementById('rt-n');if(n)n.value=c.n;const m=document.getElementById('rt-foto-msg');if(m)m.innerHTML='<b>Foto caricata:</b> '+esc(e.target.files[0].name)+'. Valori letti (simulati): controllali con lo scontrino prima di salvare.'}});
 function saleModal(id){
   const v=S.vendite.find(x=>x.id===id);const c=cli(v.cliente);
   const body=`<div class="grid g2 small"><div><span class="muted">Data</span><div>${fDT(v.data)}</div></div><div><span class="muted">Cliente</span><div>${esc(cliNome(c))}</div></div><div><span class="muted">Operatore</span><div>${esc(v.op)}</div></div><div><span class="muted">Pagamento</span><div>${esc(v.pag)}</div></div></div>
@@ -849,7 +853,7 @@ function newCliModal(){
     if(!/^\+?\d{8,15}$/.test(tel)){toast('Il numero di telefono non è valido. Usa il prefisso internazionale, ad esempio +39.','warn');return false}
     if(S.clienti.some(c=>c.tel.replace(/\s/g,'')===tel||c.tel.replace(/\s/g,'')==='+39'+tel)){toast('Esiste già un cliente con questo numero.','warn');return false}
     const az=document.getElementById('nc-t-a').classList.contains('on');
-    const id='C'+(Math.max(...S.clienti.map(c=>+c.id.slice(1)))+1);
+    const id='C'+(Math.max(0,...S.clienti.map(c=>+c.id.slice(1)))+1);
     S.clienti.push({id,tipo:az?'azienda':'privato',nome,cognome:az?'':val('nc-c'),ragione:az?nome:'',tel:tel.startsWith('+')?tel:'+39'+tel,email:val('nc-e'),start:0,stop:0,w:0,consensi:{servizio:true,marketing:document.getElementById('nc-m').checked,profilazione:document.getElementById('nc-p').checked},consensoData:new Date().toISOString(),punti:0,tag:az?['professionale']:[],note:[],creato:new Date().toISOString(),pro:az});
     log('Nuovo cliente',`${nome} · consensi: marketing ${document.getElementById('nc-m').checked?'sì':'no'}, profilazione ${document.getElementById('nc-p').checked?'sì':'no'}`);save();render();toast('Cliente salvato correttamente.');
   }}]);
@@ -870,7 +874,7 @@ function cliModal(id){
   openModal('Scheda cliente',body,[
     {label:'Esporta dati (GDPR)',fn:()=>{const data={cliente:c,acquisti:vs.map(v=>({n:v.n,data:v.data,totale:v.tot/100,righe:v.righe.map(r=>({prodotto:prod(r.p).nome,quantita:r.q}))})),messaggi:conv?conv.msgs:[]};navigator.clipboard.writeText(JSON.stringify(data,null,2)).then(()=>toast('Dati del cliente copiati negli appunti in formato JSON.')).catch(()=>toast('Copia non consentita dal browser.','warn'));log('Esportazione dati GDPR',cliNome(c));return false}},
     {label:'Anonimizza',cls:'danger',dis:!isTit(),fn:()=>{ask('Anonimizzare il cliente?',`I dati personali di <b>${esc(cliNome(c))}</b> verranno eliminati in modo definitivo. Le vendite resteranno senza riferimenti personali.`,'Anonimizza definitivamente',()=>{const nm=cliNome(c);Object.assign(c,{nome:'Cliente',cognome:'anonimizzato',tel:'—',email:'',anon:true,note:[],tag:[],consensi:{servizio:false,marketing:false,profilazione:false}});S.conversazioni=S.conversazioni.filter(w=>w.cliente!==id);log('Anonimizzazione GDPR','Scheda di '+nm+' anonimizzata');render();toast('Cliente anonimizzato.')},true);return false}},
-    {label:'Scrivi su WhatsApp',fn:()=>{let w=S.conversazioni.find(w=>w.cliente===id);if(!w){w={id:uid('W'),cliente:id,nonLetti:0,msgs:[]};S.conversazioni.unshift(w)}UI.waSel=w.id;location.hash='whatsapp';render()}},
+    REALE?null:{label:'Scrivi su WhatsApp',fn:()=>{let w=S.conversazioni.find(w=>w.cliente===id);if(!w){w={id:uid('W'),cliente:id,nonLetti:0,msgs:[]};S.conversazioni.unshift(w)}UI.waSel=w.id;location.hash='whatsapp';render()}},
     {label:'Chiudi',cls:'primary'}
   ],true);
 }
@@ -962,7 +966,7 @@ let CPSEG=()=>{};
 /* ---- Prodotti ---- */
 VIEWS.prodotti=()=>{
   let ps=S.prodotti;if(UI.prodQ){const q=norm(UI.prodQ);ps=ps.filter(p=>norm(p.nome+p.cat+p.origine).includes(q)||p.plu===UI.prodQ)}
-  return head('Prodotti e listini',`${S.prodotti.length} articoli · listino al banco · prezzi e aliquote IVA dimostrativi, da verificare con il commercialista`)+
+  return head('Prodotti e listini',`${S.prodotti.length} articoli · listino al banco${REALE?'':' · prezzi e aliquote IVA dimostrativi, da verificare con il commercialista'}`,`<button class="btn primary" data-act="newProd" ${isTit()?'':'disabled'}>${ic('plus',15)} Nuovo prodotto</button>`)+
   `<div class="card"><div class="card-h"><input class="inp" style="max-width:280px" id="prod-q" data-in="prodQ" placeholder="Cerca prodotto, categoria o origine" value="${esc(UI.prodQ)}" aria-label="Cerca prodotti"><span class="small muted">Tocca una riga per modificare il prezzo o stampare il cartellino</span></div><div class="tblwrap"><table class="tbl"><thead><tr><th>Prodotto</th><th>PLU</th><th>Categoria</th><th>Origine</th><th>Cat. comm.</th><th class="r">Costo</th><th class="r">Prezzo</th><th class="r">Margine</th><th class="r">IVA</th><th class="r">Giacenza</th></tr></thead><tbody>
   ${ps.map(p=>{const g=giacenza(p.id);const mg=(p.prezzo-p.costo)/p.prezzo*100;return `<tr class="click" data-act="prodOpen" data-v="${p.id}"><td><b>${esc(p.nome)}</b>${p.bio?' <span class="chip ok">Bio</span>':''}</td><td class="num">${p.plu}</td><td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${CAT_COL[p.cat]};margin-right:6px"></span>${esc(p.cat)}</td><td>${esc(p.origine)}</td><td>${p.categoria}</td><td class="r">${eur(p.costo)}</td><td class="r"><b>${eur(p.prezzo)}</b>/${p.unita}</td><td class="r"><span class="chip ${mg<40?'warn':'ok'}">${mg.toFixed(0)}%</span></td><td class="r">${p.iva}%</td><td class="r" style="color:${g<p.soglia?'var(--bad)':'inherit'}">${fmtQ(g,p.unita)}</td></tr>`}).join('')}
   </tbody></table></div></div>`;
@@ -975,7 +979,7 @@ function prodModal(id){
   <div class="small muted">Variazioni oltre il 15% vengono registrate come operazione sensibile.</div>
   <h3>Anteprima cartellino</h3><div class="label-prev"><div class="n">${esc(p.nome)}</div><div style="font-size:12px">Origine: <b>${esc(p.origine)}</b> · Categoria: <b>${p.categoria}</b>${p.bio?' · Biologico':''}</div><div class="pp">${eur(p.prezzo)}<span style="font-size:16px"> /${p.unita}</span></div><div style="font-size:11px;display:flex;justify-content:space-between"><span>PLU ${p.plu}</span><span>Frutta e Verdura di Ibrahim</span></div></div>
   ${hist.length?`<h3>Storico variazioni</h3>${hist.map(h=>`<div class="small">${fDT(h.data)} · ${esc(h.dettaglio)}</div>`).join('')}`:''}`,
-  [{label:'Chiudi'},{label:'Salva prezzo',cls:'primary',dis:!isTit(),fn:()=>{const v=Math.round(parseFloat(val('pp-p').replace(',','.'))*100);if(!v||v<=0){toast('Inserisci un prezzo valido.','warn');return false}if(v===p.prezzo)return;const old=p.prezzo;const ch=(v-old)/old*100;
+  [{label:'Modifica scheda',dis:!isTit(),fn:()=>{productForm(p);return false}},{label:'Chiudi'},{label:'Salva prezzo',cls:'primary',dis:!isTit(),fn:()=>{const v=Math.round(parseFloat(val('pp-p').replace(',','.'))*100);if(!v||v<=0){toast('Inserisci un prezzo valido.','warn');return false}if(v===p.prezzo)return;const old=p.prezzo;const ch=(v-old)/old*100;
     const apply=()=>{p.prezzo=v;log('Prezzo',`${p.nome}: da ${eur(old)} a ${eur(v)} (${pct(ch)})`);render();toast('Prezzo aggiornato. Ricorda di aggiornare il cartellino e la bilancia.')};
     if(Math.abs(ch)>15){ask('Confermi la variazione?',`Il prezzo di <b>${esc(p.nome)}</b> cambia del <b>${pct(ch)}</b> (da ${eur(old)} a ${eur(v)}).`,'Conferma variazione',apply);return false}apply()}}],true);
 }
@@ -1001,7 +1005,7 @@ VIEWS.magazzino=()=>{
     const mv=S.movimenti.slice().sort((a,b)=>new Date(b.data)-new Date(a.data)).slice(0,80);
     body=`<div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Data</th><th>Tipo</th><th>Prodotto</th><th class="r">Quantità</th><th>Causale</th><th>Utente</th></tr></thead><tbody>${mv.map(m=>{const p=prod(m.prod);const col={carico:'ok',vendita:'info',scarto:'bad',rettifica:'warn'}[m.tipo];return `<tr><td class="num">${fDT(m.data)}</td><td><span class="chip ${col}">${m.tipo}</span></td><td>${esc(p.nome)}</td><td class="r">${m.tipo==='carico'?'+':m.tipo==='rettifica'?(m.q>=0?'+':''):'−'}${fmtQ(Math.abs(m.q),p.unita)}</td><td>${esc(m.motivo)}</td><td>${esc(m.utente)}</td></tr>`}).join('')}</tbody></table></div></div>`;
   }
-  return head('Magazzino','Giacenze in tempo reale per lotto, scadenze e scarti')+`<div class="tabs">${tabs.map(([k,l])=>`<button data-act="magTab" data-v="${k}" class="${UI.magTab===k?'on':''}">${l}</button>`).join('')}</div>`+body;
+  return head('Magazzino','Giacenze in tempo reale per lotto, scadenze e scarti',`<button class="btn primary" data-act="carico" data-v="">${ic('plus',15)} Carico merce</button>`)+`<div class="tabs">${tabs.map(([k,l])=>`<button data-act="magTab" data-v="${k}" class="${UI.magTab===k?'on':''}">${l}</button>`).join('')}</div>`+body;
 };
 function scartoModal(pid){
   openModal('Registra scarto',`<div class="field"><label for="sc-p">Prodotto</label><select id="sc-p">${S.prodotti.map(p=>`<option value="${p.id}" ${p.id===pid?'selected':''}>${esc(p.nome)} · giacenza ${fmtQ(giacenza(p.id),p.unita)}</option>`).join('')}</select></div>
@@ -1034,14 +1038,14 @@ function newOrdModal(cid){
   <div class="grid g2"><div class="field"><label for="no-t">Tipo</label><select id="no-t"><option>Ritiro</option><option>Consegna</option></select></div><div class="field"><label for="no-d">Data e ora</label><input id="no-d" type="datetime-local" value="${(()=>{const d=new Date(NOW.getTime()+864e5);d.setHours(10,0,0,0);return new Date(d-d.getTimezoneOffset()*6e4).toISOString().slice(0,16)})()}"></div></div>
   <div class="grid g2"><div class="field"><label for="no-p">Prodotto</label><select id="no-p">${S.prodotti.map(p=>`<option value="${p.id}">${esc(p.nome)} · ${eur(p.prezzo)}/${p.unita}</option>`).join('')}</select></div><div class="field"><label for="no-q">Quantità</label><input id="no-q" class="num" value="1"></div></div>
   <div class="field"><label for="no-n">Note</label><input id="no-n" placeholder="es. citofonare, consegna entro le 10"></div>`,
-  [{label:'Annulla'},{label:'Crea ordine',cls:'primary',fn:()=>{const q=parseFloat(val('no-q').replace(',','.'));if(!q||q<=0){toast('Inserisci una quantità valida.','warn');return false}const n=Math.max(...S.ordini.map(o=>o.n))+1;S.ordini.push({id:uid('O'),n,cliente:val('no-c'),tipo:val('no-t'),data:new Date(val('no-d')).toISOString(),righe:[{p:val('no-p'),q}],stato:'Confermato',canale:location.hash==='#whatsapp'?'WhatsApp':'Negozio',note:val('no-n')});log('Ordine cliente',`Ordine n. ${n} per ${cliNome(cli(val('no-c')))}`);UI.ordTab='clienti';location.hash='ordini';render();toast(`Ordine n. ${n} creato.`)}}]);
+  [{label:'Annulla'},{label:'Crea ordine',cls:'primary',fn:()=>{const q=parseFloat(val('no-q').replace(',','.'));if(!q||q<=0){toast('Inserisci una quantità valida.','warn');return false}const n=Math.max(0,...S.ordini.map(o=>o.n))+1;S.ordini.push({id:uid('O'),n,cliente:val('no-c'),tipo:val('no-t'),data:new Date(val('no-d')).toISOString(),righe:[{p:val('no-p'),q}],stato:'Confermato',canale:location.hash==='#whatsapp'?'WhatsApp':'Negozio',note:val('no-n')});log('Ordine cliente',`Ordine n. ${n} per ${cliNome(cli(val('no-c')))}`);UI.ordTab='clienti';location.hash='ordini';render();toast(`Ordine n. ${n} creato.`)}}]);
 }
 function reorderModal(){
-  const low=lowStock();const byF={};low.forEach(p=>{(byF[p.forn]=byF[p.forn]||[]).push({p:p.id,q:p.unita==='kg'?Math.max(10,p.soglia*3-Math.floor(giacenza(p.id))):p.soglia*3,c:p.costo})});
+  const low=lowStock().filter(p=>p.forn&&S.fornitori.some(f=>f.id===p.forn));const byF={};low.forEach(p=>{(byF[p.forn]=byF[p.forn]||[]).push({p:p.id,q:p.unita==='kg'?Math.max(10,p.soglia*3-Math.floor(giacenza(p.id))):p.soglia*3,c:p.costo})});
   const tot=sum(Object.values(byF).flat(),r=>r.q*r.c);
   openModal('Proposta di riordino',`<div class="small muted">Calcolata su scorta minima × 3 meno la giacenza attuale. Puoi modificarla prima dell'invio.</div>${Object.entries(byF).map(([f,rs])=>`<div class="card"><div class="card-h"><h3>${esc(forn(f).nome)}</h3><span class="small muted">${esc(forn(f).giorni)}</span></div><div class="card-b small">${rs.map(r=>`<div class="tot-row"><span>${esc(prod(r.p).nome)}</span><span class="num">${fmtQ(r.q,prod(r.p).unita)} · ${eur(r.q*r.c)}</span></div>`).join('')}</div></div>`).join('')}<div class="tot-row"><b>Totale stimato</b><b class="num">${eur(tot)}</b></div>${tot>S.impostazioni.ordineSoglia||!isTit()?'<div class="alert warn small">Importo sopra soglia o ruolo senza autorizzazione: l\'ordine passa dalle approvazioni.</div>':''}`,
   [{label:'Annulla'},{label:tot>S.impostazioni.ordineSoglia||!isTit()?'Invia per approvazione':'Invia ordini ai fornitori',cls:'primary',fn:()=>{
-    const needs=tot>S.impostazioni.ordineSoglia||!isTit();let n=Math.max(...S.acquisti.map(o=>o.n));
+    const needs=tot>S.impostazioni.ordineSoglia||!isTit();let n=Math.max(0,...S.acquisti.map(o=>o.n));
     Object.entries(byF).forEach(([f,rs])=>{const c=dayStart(NOW);c.setDate(c.getDate()+1);const o={id:uid('PO'),n:++n,forn:f,data:new Date().toISOString(),consegna:c.toISOString(),righe:rs,stato:needs?'In approvazione':'Inviato'};S.acquisti.push(o);
       if(needs)S.approvazioni.unshift({id:uid('A'),tipo:'ordine',ref:o.id,titolo:`Ordine n. ${o.n} a ${forn(f).nome}`,dettaglio:`${rs.length} prodotti · ${eur(sum(rs,r=>r.q*r.c))}`,richiedente:ME().nome+' ('+ME().ruolo+')',data:new Date().toISOString(),stato:'in attesa'})});
     log('Riordino',needs?'Proposta di riordino inviata per approvazione':'Ordini inviati ai fornitori');UI.ordTab='fornitori';render();toast(needs?'Proposta inviata per approvazione.':'Ordini registrati come inviati (in demo non parte nessuna comunicazione).')}}],true);
@@ -1199,7 +1203,7 @@ function newFornModal(){
   <div class="grid g2"><div class="field"><label for="nfo-c">Referente</label><input id="nfo-c"></div><div class="field"><label for="nfo-tel">Telefono</label><input id="nfo-tel" inputmode="tel"></div></div>
   <div class="grid g2"><div class="field"><label for="nfo-e">Email</label><input id="nfo-e" type="email"></div><div class="field"><label for="nfo-g">Giorni di consegna</label><input id="nfo-g" placeholder="es. Lun, Mer, Ven"></div></div>
   <div class="field"><label for="nfo-pg">Condizioni di pagamento</label><select id="nfo-pg"><option>Rimessa diretta</option><option>Bonifico 30 gg</option><option>Bonifico 60 gg</option><option>Bonifico 90 gg</option></select></div>`,
-  [{label:'Annulla'},{label:'Salva fornitore',cls:'primary',fn:()=>{const n=val('nfo-n');if(!n){toast('Inserisci la ragione sociale.','warn');return false}const id='F'+(Math.max(...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id,nome:n,tipo:val('nfo-t'),piva:val('nfo-p'),contatto:val('nfo-c')||'—',tel:val('nfo-tel')||'—',email:val('nfo-e')||'—',giorni:val('nfo-g')||'Da definire',pagamento:val('nfo-pg'),qualita:null,puntualita:null});log('Nuovo fornitore',n);render();toast('Fornitore salvato.')}}],true);
+  [{label:'Annulla'},{label:'Salva fornitore',cls:'primary',fn:()=>{const n=val('nfo-n');if(!n){toast('Inserisci la ragione sociale.','warn');return false}const id='F'+(Math.max(0,...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id,nome:n,tipo:val('nfo-t'),piva:val('nfo-p'),contatto:val('nfo-c')||'—',tel:val('nfo-tel')||'—',email:val('nfo-e')||'—',giorni:val('nfo-g')||'Da definire',pagamento:val('nfo-pg'),qualita:null,puntualita:null});log('Nuovo fornitore',n);render();toast('Fornitore salvato.')}}],true);
 }
 const EXTRA_ACTIONS={
   acqTab:d=>{UI.acqTab=d.v;render()},
@@ -1257,7 +1261,7 @@ const isDup=x=>[...S.fatture,...S.spese].some(y=>(y.num||y.descr||'').includes(x
 function saveDoc(x,c){
   if(c.kind==='fattura'){
     let fid=c.forn;
-    if(!fid){fid='F'+(Math.max(...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id:fid,nome:x.nome,piva:x.piva,tipo:'Altro',contatto:'—',tel:'—',email:'—',giorni:'Da definire',pagamento:'Bonifico 30 gg',qualita:null,puntualita:null});log('Nuovo fornitore',x.nome+' (da fattura importata)')}
+    if(!fid){fid='F'+(Math.max(0,...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id:fid,nome:x.nome,piva:x.piva,tipo:'Altro',contatto:'—',tel:'—',email:'—',giorni:'Da definire',pagamento:'Bonifico 30 gg',qualita:null,puntualita:null});log('Nuovo fornitore',x.nome+' (da fattura importata)')}
     const fo=forn(fid);let sc=x.scad?new Date(x.scad+'T12:00'):null;if(!sc){const gg=+((fo.pagamento.match(/(\d+) gg/)||[0,0])[1]);sc=new Date(x.data+'T12:00');sc.setDate(sc.getDate()+gg)}
     S.fatture.push({id:uid('FA'),num:'Fatt. '+x.num,forn:fid,data:new Date(x.data+'T12:00').toISOString(),scadenza:sc.toISOString(),imp:x.imp,iva:x.iva,tot:x.tot,stato:'Da pagare',pagataIl:null,metodo:'',doc:x.file||'',fonte:x.fonte});
     log('Documento importato',`${x.fonte} · ${x.nome} · n. ${x.num} · ${eur(x.tot)}`);
@@ -1272,7 +1276,7 @@ function reviewDoc(x,img){
   const fOpts=`<option value="">Nuovo fornitore: ${esc(x.nome||'—')}</option>`+S.fornitori.map(f=>`<option value="${f.id}" ${c.forn===f.id?'selected':''}>${esc(f.nome)}</option>`).join('');
   const e=v=>(v/100).toFixed(2).replace('.',',');
   openModal('Controlla i dati letti',`${img?`<img src="${img}" alt="Foto del documento" style="max-height:220px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)">`:''}
-  <div class="alert ${x.fonte==='Foto scontrino'?'warn':'ok'} small">${x.fonte==='Foto scontrino'?'<b>Lettura simulata.</b> Nella versione completa l\'AI legge dalla foto data, importo, IVA e partita IVA. Qui i campi contengono valori di esempio: correggili.':'<b>Dati letti dal file della fattura elettronica.</b> Controlla e conferma: nulla viene salvato senza il tuo consenso.'}</div>
+  <div class="alert ${x.fonte==='Foto scontrino'?'warn':'ok'} small">${x.fonte==='Foto scontrino'&&REALE?'Compila i campi guardando la foto: la lettura automatica non è ancora attiva.':x.fonte==='Foto scontrino'?'<b>Lettura simulata.</b> Nella versione completa l\'AI legge dalla foto data, importo, IVA e partita IVA. Qui i campi contengono valori di esempio: correggili.':'<b>Dati letti dal file della fattura elettronica.</b> Controlla e conferma: nulla viene salvato senza il tuo consenso.'}</div>
   ${dup?'<div class="alert bad small">Attenzione: esiste già un documento con lo stesso numero. Potrebbe essere un doppione.</div>':''}
   <div class="grid g2"><div class="field"><label for="rv-k">Registra come</label><select id="rv-k"><option value="fattura" ${c.kind==='fattura'?'selected':''}>Acquisto di merce (fornitore)</option><option value="spesa" ${c.kind==='spesa'?'selected':''}>Spesa generale</option></select></div>
   <div class="field"><label for="rv-c">Categoria spesa (se spesa)</label><select id="rv-c">${SPESE_CAT.map(k=>`<option ${k===c.cat?'selected':''}>${k}</option>`).join('')}</select></div></div>
@@ -1291,16 +1295,16 @@ function reviewDoc(x,img){
 }
 function scanModal(){
   openModal('Importa o scansiona un documento',`<div class="grid g3">
-   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Fattura elettronica</h3><div class="small muted">File XML o P7M ricevuto dal fornitore, dalla PEC o scaricato dal cassetto fiscale. I dati vengono letti in modo esatto.</div><label class="btn primary" for="imp-xml" style="justify-content:center">Scegli file XML / P7M</label><input id="imp-xml" type="file" accept=".xml,.p7m,application/xml,text/xml" hidden><div class="small muted">Oppure prova con un esempio:</div><div class="actions"><button class="btn sm" data-act="impSample" data-v="merce">Fattura merce</button><button class="btn sm" data-act="impSample" data-v="luce">Bolletta luce</button></div></div></div>
-   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Foto dal telefono</h3><div class="small muted">Scontrino del carburante, ricevuta, documento di trasporto cartaceo. Dal telefono si apre direttamente la fotocamera.</div><label class="btn citrus" for="imp-foto" style="justify-content:center">Scatta o scegli foto</label><input id="imp-foto" type="file" accept="image/*" hidden><div class="small muted">In questa demo la lettura della foto è simulata.</div></div></div>
-   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Arrivo automatico</h3><div class="small muted">Nella versione completa le fatture elettroniche arrivano da sole ogni giorno dal Sistema di Interscambio, senza scansionare nulla.</div><button class="btn" data-act="impSync" style="justify-content:center">Simula sincronizzazione</button></div></div>
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Fattura elettronica</h3><div class="small muted">File XML o P7M ricevuto dal fornitore, dalla PEC o scaricato dal cassetto fiscale. I dati vengono letti in modo esatto.</div><label class="btn primary" for="imp-xml" style="justify-content:center">Scegli file XML / P7M</label><input id="imp-xml" type="file" accept=".xml,.p7m,application/xml,text/xml" hidden>${REALE?'':'<div class="small muted">Oppure prova con un esempio:</div><div class="actions"><button class="btn sm" data-act="impSample" data-v="merce">Fattura merce</button><button class="btn sm" data-act="impSample" data-v="luce">Bolletta luce</button></div>'}</div></div>
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Foto dal telefono</h3><div class="small muted">Scontrino del carburante, ricevuta, documento di trasporto cartaceo. Dal telefono si apre direttamente la fotocamera.</div><label class="btn citrus" for="imp-foto" style="justify-content:center">Scatta o scegli foto</label><input id="imp-foto" type="file" accept="image/*" hidden><div class="small muted">${REALE?'La lettura automatica della foto non è ancora attiva: compili tu i campi guardando la foto.':'In questa demo la lettura della foto è simulata.'}</div></div></div>
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Arrivo automatico</h3><div class="small muted">Nella versione completa le fatture elettroniche arrivano da sole ogni giorno dal Sistema di Interscambio, senza scansionare nulla.</div>${REALE?'<span class="chip">Non ancora attivo</span>':'<button class="btn" data-act="impSync" style="justify-content:center">Simula sincronizzazione</button>'}</div></div>
   </div>`,[{label:'Chiudi'}],true);
 }
 async function onImportFile(input){
   const f=input.files[0];if(!f)return;
   if(input.id==='imp-xml'){try{const x=await readFPAFile(f);x.file=f.name;reviewDoc(x)}catch(e){toast(e.message||'Impossibile leggere il file.','warn')}}
   else{const url=URL.createObjectURL(f);const d=new Date(NOW-NOW.getTimezoneOffset()*6e4).toISOString().slice(0,10);
-    reviewDoc({fonte:'Foto scontrino',nome:'Distributore carburante (esempio)',piva:'',num:'',data:d,scad:d,imp:5934,iva:1306,tot:7240,aliq:22,descr:'Rifornimento gasolio furgone',file:f.name},url)}
+    reviewDoc(REALE?{fonte:'Foto scontrino',nome:'',piva:'',num:'',data:d,scad:d,imp:0,iva:0,tot:0,aliq:22,descr:'',file:f.name}:{fonte:'Foto scontrino',nome:'Distributore carburante (esempio)',piva:'',num:'',data:d,scad:d,imp:5934,iva:1306,tot:7240,aliq:22,descr:'Rifornimento gasolio furgone',file:f.name},url)}
 }
 const SCAN_ACTIONS={
   scanDoc:scanModal,
@@ -1425,15 +1429,137 @@ VIEWS.impostazioni=()=>{
    <div class="field"><label for="st-n">Insegna</label><input id="st-n" value="Frutta e Verdura di Ibrahim"></div>
    <div class="field"><label for="st-c">Comune</label><input id="st-c" value="Fontanellato (PR)"></div>
    <div class="grid g2"><div class="field"><label for="st-pi">Partita IVA</label><input id="st-pi" placeholder="Da inserire"></div><div class="field"><label for="st-rt">Registratore Telematico</label><input id="st-rt" placeholder="Marca e modello"></div></div>
-   <div class="small muted">Questi dati reali non sono ancora stati forniti: la demo non li inventa.</div></div></div>
+   <div class="small muted">${REALE?'Completa i dati della tua attività.':'Questi dati reali non sono ancora stati forniti: la demo non li inventa.'}</div></div></div>
   <div class="card"><div class="card-h"><h2>Soglie operazioni sensibili</h2></div><div class="card-b stack" style="gap:10px">
    <div class="field"><label for="st-sc">Sconto massimo per l'addetto vendite (%)</label><input id="st-sc" class="num" value="${I.scontoMaxAddetto}"></div>
    <div class="field"><label for="st-or">Importo ordine fornitore oltre cui serve approvazione (€)</label><input id="st-or" class="num" value="${I.ordineSoglia/100}"></div>
    <div class="field"><label for="st-mm">Messaggi promozionali al mese per cliente</label><input id="st-mm" class="num" value="${I.limiteMsgMese}"></div>
    <button class="btn primary" data-act="saveSet" ${isTit()?'':'disabled'}>Salva soglie</button></div></div>
   <div class="card"><div class="card-h"><h2>Aspetto e lingua</h2></div><div class="card-b stack" style="gap:10px"><div class="field"><label>Tema</label><div class="seg"><button data-act="theme" data-v="">Automatico</button><button data-act="theme" data-v="light">Chiaro</button><button data-act="theme" data-v="dark">Scuro</button></div></div><div class="field"><label for="st-l">Lingua</label><select id="st-l"><option>Italiano</option><option disabled>English (prossimamente)</option><option disabled>العربية (prossimamente)</option></select></div></div></div>
-  <div class="card"><div class="card-h"><h2>Dati dimostrativi</h2></div><div class="card-b stack" style="gap:10px"><div class="small">Le modifiche fatte in questa demo restano solo nel tuo browser fino a fine giornata. Puoi ripartire da zero in qualsiasi momento.</div><button class="btn danger" data-act="reset">Reimposta dati dimostrativi</button></div></div></div>`;
+  ${REALE?`<div class="card"><div class="card-h"><h2>Backup e azzeramento</h2></div><div class="card-b stack" style="gap:10px"><div class="small">I dati sono salvati nell'archivio privato del tuo account e si vedono da ogni dispositivo dove apri questa pagina. Scarica comunque un backup ogni settimana.</div><button class="btn primary" data-act="backup">Scarica backup</button><label class="btn" for="bk-file" style="justify-content:center">Ripristina da backup</label><input id="bk-file" type="file" accept=".json,application/json" hidden><button class="btn danger" data-act="resetAll" ${isTit()?'':'disabled'}>Azzera tutti i dati</button></div></div></div>`:`<div class="card"><div class="card-h"><h2>Dati dimostrativi</h2></div><div class="card-b stack" style="gap:10px"><div class="small">Le modifiche fatte in questa demo restano solo nel tuo browser fino a fine giornata. Puoi ripartire da zero in qualsiasi momento.</div><button class="btn danger" data-act="reset">Reimposta dati dimostrativi</button></div></div></div>`}`;
 };
+
+/* ============ Modalità d'uso reale: archivio privato nel cloud ============ */
+function emptyState(){const b=seed();return{v:3,giorno:'',fatture:[],spese:[],fornitori:[],prodotti:[],clienti:[],vendite:[],lotti:[],movimenti:[],conversazioni:[],campagne:[],approvazioni:[],ordini:[],acquisti:[],automazioni:b.automazioni.map(a=>({...a,ultima:null,esiti:0})),feedback:[],referral:[],fedeltaMov:[],registro:[],notifiche:[],chiusureRT:[],impostazioni:b.impostazioni}}
+const DAILY=['vendite','movimenti','registro','fedeltaMov'];
+const ENT=['fatture','spese','fornitori','prodotti','clienti','lotti','conversazioni','campagne','approvazioni','ordini','acquisti','automazioni','chiusureRT','notifiche','feedback','referral'];
+let DEV='';try{DEV=localStorage.getItem('crmibra_dev')||'';if(!DEV){DEV='d'+Math.random().toString(36).slice(2,8);localStorage.setItem('crmibra_dev',DEV)}}catch(e){DEV='d'+Math.random().toString(36).slice(2,8)}
+let DB=null,DL=null,LAST=new Map(),syncT=null,writing=Promise.resolve();
+const SYNC={st:REALE?'carico':'',msg:''};
+const dayKey=d=>{const x=new Date(d);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
+const safeId=s=>String(s).replace(/[^A-Za-z0-9_\-.~:@+]/g,'_').slice(0,150);
+function toDocs(){
+  const m=new Map();
+  for(const k of DAILY){const g={};for(const x of S[k]){if(!x.id)x.id=uid('R');if(!x._dev)x._dev=DEV;const key=dayKey(x.data)+'~'+x._dev;(g[key]=g[key]||[]).push(x)}for(const d in g)m.set(k+'/'+d,{items:g[d]})}
+  for(const k of ENT){for(const x of S[k]){if(!x._id)x._id=safeId(x.id||x.giorno&&dayKey(x.giorno)||uid('x'));m.set(k+'/'+x._id,{item:x})}}
+  m.set('meta/stato',{impostazioni:S.impostazioni,syncDone:!!S.syncDone});
+  return m;
+}
+function setSync(st,msg){SYNC.st=st;SYNC.msg=msg||'';const e=document.getElementById('sync');if(e)e.innerHTML=syncHtml()}
+function syncHtml(){if(!REALE)return'';const t={carico:['info','Caricamento…'],salvo:['info','Salvataggio…'],ok:['ok','Salvato'],errore:['bad','Non salvato'],off:['bad','Archivio non raggiungibile']}[SYNC.st]||['',''];return `<span class="chip ${t[0]}" title="${esc(SYNC.msg)}">${t[1]}</span>`}
+function scheduleSync(){if(!REALE||!DB||SYNC.st==='carico')return;clearTimeout(syncT);syncT=setTimeout(doSync,500)}
+async function writeDoc(p,b){if(b)await DB.doc(p).set(b);else await DB.doc(p).delete()}
+function doSync(){
+  const m=toDocs();const ops=[];
+  for(const [p,b] of m){const j=JSON.stringify(b);if(LAST.get(p)!==j)ops.push([p,b,j])}
+  for(const p of [...LAST.keys()])if(!m.has(p))ops.push([p,null,null]);
+  if(!ops.length)return;setSync('salvo');
+  writing=writing.then(async()=>{
+    for(const [p,b,j] of ops){
+      let err=null;try{await writeDoc(p,b)}catch(e){err=e}
+      if(err&&err.code==='unavailable'){await new Promise(r=>setTimeout(r,700+Math.random()*900));try{await writeDoc(p,b);err=null}catch(e2){err=e2}}
+      if(err){const q=err.code==='quota_exceeded';setSync('errore',q?'Spazio dell\'archivio esaurito: scarica un backup.':'Salvataggio non riuscito ('+(err.code||'errore')+'). Riprovo alla prossima modifica.');toast(q?'Spazio dell\'archivio esaurito: scarica subito un backup.':'Attenzione: salvataggio non riuscito. Controlla la connessione.','warn');return}
+      if(j)LAST.set(p,j);else LAST.delete(p);
+    }
+    setSync('ok');
+  });
+}
+function applyRemote(coll,snap){
+  let changed=false;
+  for(const ch of snap.docChanges()){
+    const p=coll+'/'+ch.doc.id;const d=ch.doc.data();
+    if(ch.type==='removed'){if(!LAST.has(p))continue;LAST.delete(p);
+      if(DAILY.includes(coll)){const [day,dev]=ch.doc.id.split('~');S[coll]=S[coll].filter(x=>!(dayKey(x.data)===day&&x._dev===dev))}
+      else if(coll!=='meta'){S[coll]=S[coll].filter(x=>x._id!==ch.doc.id)}
+      changed=true;continue}
+    if(ch.doc.metadata.hasPendingWrites)continue;
+    const j=JSON.stringify(d);if(LAST.get(p)===j)continue;LAST.set(p,j);changed=true;
+    if(coll==='meta'){if(d.impostazioni)S.impostazioni=d.impostazioni;S.syncDone=d.syncDone;continue}
+    if(DAILY.includes(coll)){for(const it of (d.items||[])){const i=S[coll].findIndex(x=>x.id===it.id);const c=JSON.parse(JSON.stringify(it));if(i<0)S[coll].push(c);else S[coll][i]=c}}
+    else{const it=JSON.parse(JSON.stringify(d.item||{}));const i=S[coll].findIndex(x=>x._id===ch.doc.id);if(i<0)S[coll].push(it);else S[coll][i]=it}
+  }
+  if(changed){sortState();if(!$('#overlay').classList.contains('show'))render();else renderNav()}
+}
+function sortState(){S.vendite.sort((a,b)=>new Date(a.data)-new Date(b.data));S.registro.sort((a,b)=>new Date(b.data)-new Date(a.data));S.fedeltaMov.sort((a,b)=>new Date(b.data)-new Date(a.data))}
+async function initCloud(){
+  const timer=setTimeout(()=>{if(SYNC.st==='carico'){setSync('off','L\'archivio non risponde: controlla la connessione.');render()}},10000);
+  let db=null;try{db=await claude.use('db')}catch(e){}
+  try{DL=await claude.use('downloads')}catch(e){}
+  if(!db){clearTimeout(timer);setSync('off','Archivio non disponibile: apri la pagina da claude.ai con il tuo account.');render();return}
+  DB=db;
+  try{
+    const colls=[...DAILY,...ENT,'meta'];
+    const snaps=await Promise.all(colls.map(c=>DB.collection(c).get()));
+    snaps.forEach((sn,i)=>{const c=colls[i];if(c==='automazioni'&&sn.docs.length)S.automazioni=[];for(const d of sn.docs){const b=d.data();LAST.set(c+'/'+d.id,JSON.stringify(b));
+      if(c==='meta'){if(b.impostazioni)S.impostazioni=b.impostazioni;S.syncDone=b.syncDone}
+      else if(DAILY.includes(c))(b.items||[]).forEach(it=>S[c].push(JSON.parse(JSON.stringify(it))));
+      else S[c].push(JSON.parse(JSON.stringify(b.item)))}});
+    sortState();clearTimeout(timer);setSync('ok');render();
+    colls.forEach(c=>DB.collection(c).onSnapshot(sn=>applyRemote(c,sn),e=>{if(e&&e.code==='revoked')setSync('off','Accesso all\'archivio revocato.')}));
+    scheduleSync();
+  }catch(e){clearTimeout(timer);setSync('off','Errore di caricamento ('+(e&&e.code||'sconosciuto')+').');render()}
+}
+async function backupDownload(){
+  const data=JSON.stringify({app:'CRM IBRA',versione:1,creato:new Date().toISOString(),dati:S},null,1);
+  const name='crm-ibra-backup-'+dayKey(new Date())+'.json';
+  if(DL){try{await DL.save({filename:name,data});log('Backup','Backup scaricato: '+name);toast('Backup pronto: conservalo in un posto sicuro (es. Google Drive).');return}catch(e){}}
+  navigator.clipboard.writeText(data).then(()=>toast('Download non disponibile: backup copiato negli appunti.')).catch(()=>toast('Impossibile creare il backup su questo dispositivo.','warn'));
+}
+function resetAll(){
+  openModal('Azzera tutti i dati',`<div class="alert bad">Verranno cancellati <b>definitivamente</b> clienti, prodotti, vendite, magazzino, fornitori, fatture, spese e registro, su tutti i dispositivi.</div><div class="small">Prima di continuare scarica un backup. Per confermare scrivi <b>AZZERA</b>.</div><input class="inp" id="rz-c" autocomplete="off" aria-label="Scrivi AZZERA per confermare">`,
+  [{label:'Scarica backup',fn:()=>{backupDownload();return false}},{label:'Annulla'},{label:'Azzera tutto',cls:'danger',fn:()=>{if(val('rz-c')!=='AZZERA'){toast('Scrivi AZZERA in maiuscolo per confermare.','warn');return false}S=emptyState();UI.cart=[];UI.aiMsgs=[];log('Azzeramento','Tutti i dati sono stati cancellati');render();toast('Tutti i dati sono stati azzerati.')}}]);
+}
+function restoreBackup(file){
+  file.text().then(t=>{let x;try{x=JSON.parse(t)}catch(e){toast('Il file non è un backup valido.','warn');return}const d=x&&x.dati;if(!d||!Array.isArray(d.vendite)||!Array.isArray(d.clienti)){toast('Il file non è un backup di CRM IBRA.','warn');return}
+    ask('Ripristinare il backup?',`Backup del ${fDT(x.creato)}: ${d.clienti.length} clienti, ${d.prodotti.length} prodotti, ${d.vendite.length} vendite.<br>I dati attuali verranno <b>sostituiti</b>.`,'Ripristina',()=>{S=Object.assign(emptyState(),d);sortState();log('Ripristino','Ripristinato backup del '+fDT(x.creato));render();toast('Backup ripristinato.')},true)});
+}
+document.addEventListener('change',e=>{if(e.target.id==='bk-file'&&e.target.files[0])restoreBackup(e.target.files[0])});
+
+/* ---- Prodotti: nuova scheda e modifica ---- */
+const UNITA=['kg','pz','mazzo','conf','cassetta'];
+function productForm(p){
+  const n=!p;p=p||{nome:'',cat:'Verdura',unita:'kg',prezzo:0,costo:0,iva:4,origine:'Italia – ',plu:'',soglia:5,forn:'',categoria:'I',bio:false};
+  const e=v=>v?(v/100).toFixed(2).replace('.',','):'';
+  openModal(n?'Nuovo prodotto':'Modifica '+p.nome,`<div class="grid g2"><div class="field"><label for="pf-n">Nome *</label><input id="pf-n" value="${esc(p.nome)}" placeholder="es. Pomodori ramati"></div><div class="field"><label for="pf-c">Categoria</label><select id="pf-c">${Object.keys(CAT_COL).map(c=>`<option ${c===p.cat?'selected':''}>${c}</option>`).join('')}</select></div></div>
+  <div class="grid g3"><div class="field"><label for="pf-u">Unità di vendita</label><select id="pf-u">${UNITA.map(u=>`<option ${u===p.unita?'selected':''}>${u}</option>`).join('')}</select></div><div class="field"><label for="pf-p">Prezzo di vendita (€) *</label><input id="pf-p" class="num" inputmode="decimal" value="${e(p.prezzo)}"></div><div class="field"><label for="pf-k">Costo d'acquisto (€)</label><input id="pf-k" class="num" inputmode="decimal" value="${e(p.costo)}"></div></div>
+  <div class="grid g3"><div class="field"><label for="pf-i">Aliquota IVA</label><select id="pf-i">${[4,10,22].map(a=>`<option value="${a}" ${a===p.iva?'selected':''}>${a}%</option>`).join('')}</select></div><div class="field"><label for="pf-plu">PLU / codice bilancia</label><input id="pf-plu" class="num" value="${esc(p.plu)}"></div><div class="field"><label for="pf-s">Scorta minima</label><input id="pf-s" class="num" inputmode="decimal" value="${p.soglia}"></div></div>
+  <div class="grid g3"><div class="field"><label for="pf-o">Origine</label><input id="pf-o" value="${esc(p.origine)}"></div><div class="field"><label for="pf-cc">Categoria commerciale</label><select id="pf-cc">${['Extra','I','II'].map(c=>`<option ${c===p.categoria?'selected':''}>${c}</option>`).join('')}</select></div><div class="field"><label for="pf-f">Fornitore abituale</label><select id="pf-f"><option value="">— nessuno —</option>${S.fornitori.map(f=>`<option value="${f.id}" ${f.id===p.forn?'selected':''}>${esc(f.nome)}</option>`).join('')}</select></div></div>
+  <label class="check"><input type="checkbox" id="pf-b" ${p.bio?'checked':''}> Biologico</label>
+  <div class="small muted">Aliquote IVA da confermare con il commercialista.</div>`,
+  [{label:'Annulla'},{label:n?'Crea prodotto':'Salva modifiche',cls:'primary',fn:()=>{
+    const num=s=>Math.round(parseFloat(String(s).replace(',','.'))*100);
+    const nome=val('pf-n'),prezzo=num(val('pf-p'));if(!nome){toast('Inserisci il nome del prodotto.','warn');return false}if(!prezzo||prezzo<=0){toast('Inserisci un prezzo di vendita valido.','warn');return false}
+    const plu=val('pf-plu');if(plu&&S.prodotti.some(x=>x.plu===plu&&x!==p&&x.id!==p.id)){toast('Questo PLU è già usato da un altro prodotto.','warn');return false}
+    const data={nome,cat:val('pf-c'),unita:val('pf-u'),prezzo,costo:num(val('pf-k'))||0,iva:+val('pf-i'),plu,soglia:parseFloat(val('pf-s').replace(',','.'))||0,origine:val('pf-o'),categoria:val('pf-cc'),forn:val('pf-f'),bio:document.getElementById('pf-b').checked,attivo:true};
+    if(n){const id='P'+(Math.max(0,...S.prodotti.map(x=>+x.id.slice(1)||0))+1);S.prodotti.push({id,...data});log('Nuovo prodotto',`${nome} · ${eur(prezzo)}/${data.unita}`)}
+    else{const old=p.prezzo;Object.assign(S.prodotti.find(x=>x.id===p.id),data);log('Modifica prodotto',`${nome}${old!==prezzo?' · prezzo da '+eur(old)+' a '+eur(prezzo):''}`)}
+    render();toast(n?'Prodotto creato.':'Prodotto aggiornato.')}}],true);
+}
+function caricoModal(pid){
+  if(!S.prodotti.length){toast('Prima crea almeno un prodotto.','warn');return}
+  const oggi=dayKey(new Date());const p0=S.prodotti.find(p=>p.id===pid)||S.prodotti[0];
+  openModal('Carico merce',`<div class="small muted">Registra la merce arrivata senza un ordine nel sistema (es. acquisto al mercato). Viene creato un lotto con origine e fornitore per la tracciabilità.</div>
+  <div class="field"><label for="cm-p">Prodotto</label><select id="cm-p">${S.prodotti.map(p=>`<option value="${p.id}" ${p.id===p0.id?'selected':''}>${esc(p.nome)} (${p.unita})</option>`).join('')}</select></div>
+  <div class="grid g3"><div class="field"><label for="cm-q">Quantità *</label><input id="cm-q" class="num" inputmode="decimal"></div><div class="field"><label for="cm-c">Costo unitario (€)</label><input id="cm-c" class="num" inputmode="decimal" value="${p0.costo?(p0.costo/100).toFixed(2).replace('.',','):''}"></div><div class="field"><label for="cm-s">Vendere entro</label><input id="cm-s" type="date"></div></div>
+  <div class="grid g3"><div class="field"><label for="cm-f">Fornitore</label><select id="cm-f"><option value="">— nessuno —</option>${S.fornitori.map(f=>`<option value="${f.id}" ${f.id===p0.forn?'selected':''}>${esc(f.nome)}</option>`).join('')}</select></div><div class="field"><label for="cm-o">Origine</label><input id="cm-o" value="${esc(p0.origine)}"></div><div class="field"><label for="cm-d">DDT / documento</label><input id="cm-d" placeholder="es. DDT 123 del ${fD(new Date())}"></div></div>`,
+  [{label:'Annulla'},{label:'Carica in magazzino',cls:'primary',fn:()=>{const p=prod(val('cm-p'));const q=parseFloat(val('cm-q').replace(',','.'));if(!q||q<=0){toast('Inserisci la quantità arrivata.','warn');return false}
+    const c=Math.round(parseFloat(val('cm-c').replace(',','.'))*100)||p.costo||0;let sc=val('cm-s')?new Date(val('cm-s')+'T12:00'):null;if(!sc){sc=dayStart(NOW);sc.setDate(sc.getDate()+(p.cat==='Frutta secca'?40:p.cat==='Agrumi'?14:7))}
+    const lid='L'+String(S.lotti.length+1).padStart(4,'0')+'-'+Math.random().toString(36).slice(2,5);
+    S.lotti.push({id:lid,prod:p.id,forn:val('cm-f'),arrivo:new Date().toISOString(),qi:q,res:q,costo:c,origine:val('cm-o')||p.origine,scadenza:sc.toISOString(),ddt:val('cm-d')||'—'});
+    if(c)p.costo=c;S.movimenti.push({id:uid('M'),data:new Date().toISOString(),tipo:'carico',prod:p.id,q,motivo:val('cm-d')||'Carico manuale',utente:ME().nome,lotto:lid});
+    log('Carico merce',`${p.nome} · ${fmtQ(q,p.unita)}`);render();toast('Merce caricata in magazzino.')}}],true);
+}
+const REAL_ACTIONS={newProd:()=>productForm(null),editProd:d=>productForm(prod(d.v)),carico:d=>caricoModal(d.v||''),backup:backupDownload,resetAll};
 
 /* ============ Azioni ============ */
 const A={
@@ -1529,12 +1655,12 @@ $('#gsearch').addEventListener('input',e=>{
   const ps=S.prodotti.filter(p=>norm(p.nome).replace(/\s/g,'').includes(q)||p.plu===q).slice(0,5);
   box.innerHTML=(cs.map(c=>`<button data-act="gC" data-v="${c.id}"><span class="avatar" style="width:24px;height:24px;font-size:10px">${ini(c)}</span>${esc(cliNome(c))}<span class="muted small" style="margin-left:auto">Cliente</span></button>`).join('')+ps.map(p=>`<button data-act="gP" data-v="${p.id}"><span style="width:10px;height:10px;border-radius:50%;background:${CAT_COL[p.cat]}"></span>${esc(p.nome)} <span class="muted small">${eur(p.prezzo)}/${p.unita}</span><span class="muted small" style="margin-left:auto">Prodotto</span></button>`).join(''))||'<div class="empty small">Nessun risultato</div>';box.hidden=false;
 });
-Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS,{rtClose:rtCloseModal});
+Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS,REAL_ACTIONS,{rtClose:rtCloseModal});
 A.gC=d=>{$('#gresults').hidden=true;$('#gsearch').value='';cliModal(d.v)};
 A.gP=d=>{$('#gresults').hidden=true;$('#gsearch').value='';prodModal(d.v)};
 try{const t=localStorage.getItem('crmibra_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
 window.addEventListener('hashchange',render);
-save();render();
+if(REALE){S=emptyState();const b=$('#banner');b.classList.add('real');b.innerHTML='<span>VERSIONE DI PROVA SUL CAMPO · i dati sono salvati nell\'archivio privato del tuo account. Scarica un backup ogni settimana.</span><button type="button" data-act="backup">Scarica backup</button>';render();initCloud()}else{save();render()}
 </script>
 </body>
 </html>
