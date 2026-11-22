@@ -516,12 +516,13 @@ function seed(){
   addS('Manutenzione','Controllo celle frigorifere','Tecnico frigorista (demo)',18000,22,'Una tantum',daysAgo(9),'Da pagare',daysAgo(-21));
   [3,10,17,24,31,38].forEach(k=>addS('Trasporti','Carburante furgone (mercato e consegne)','Distributore (demo)',ri(6000,9000),22,'Una tantum',daysAgo(k),'Pagata'));
   [6,27].forEach(k=>addS('Imballaggi','Sacchetti compostabili e vaschette','Grossista imballaggi (demo)',ri(8500,11000),22,'Una tantum',daysAgo(k),'Pagata'));
-  return {v:2,fatture,spese,giorno:dayStart(NOW).toISOString(),fornitori,prodotti,clienti,vendite,lotti,movimenti,conversazioni,campagne,approvazioni,ordini,acquisti,automazioni,feedback,referral,fedeltaMov,registro,notifiche:[],
+  return {v:3,fatture,spese,giorno:dayStart(NOW).toISOString(),fornitori,prodotti,clienti,vendite,lotti,movimenti,conversazioni,campagne,approvazioni,ordini,acquisti,automazioni,feedback,referral,fedeltaMov,registro,notifiche:[],
+    chiusureRT:(()=>{const out=[];for(let d=7;d>=1;d--){const a=daysAgo(d),b=daysAgo(d-1);const tot=vendite.filter(v=>{const x=new Date(v.data);return x>=a&&x<b}).reduce((s,v)=>s+v.tot,0);if(!tot)continue;out.push({giorno:a.toISOString(),z:900+(44-d),rt:d===4?tot-320:tot,docs:vendite.filter(v=>{const x=new Date(v.data);return x>=a&&x<b}).length-(d===4?1:0),nota:d===4?'Uno scontrino registrato sul tablet ma non battuto sull\'RT':'',utente:'Ibrahim',fonte:d%2?'Inserita a mano':'Foto della chiusura'})}return out})(),
     impostazioni:{scontoMaxAddetto:10,resoSoglia:2000,ordineSoglia:30000,limiteMsgMese:4,premi:[{punti:100,nome:'Buono sconto 5 €',valore:500},{punti:250,nome:'Cassetta di frutta di stagione',valore:1500}]}};
 }
-const KEY='crmibra_demo_v2';
+const KEY='crmibra_demo_v3';
 let S;
-try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===2&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
+try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===3&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
 if(!S)S=seed();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
@@ -656,6 +657,7 @@ VIEWS.cruscotto=()=>{
   if(ur)alerts.push(['info',`<b>${ur} messaggi WhatsApp da leggere</b>`,'whatsapp','Apri']);
   if(pa.length)alerts.push(['warn',`<b>${pa.length} approvazioni in attesa</b> · ${esc(pa[0].titolo)}`,'approvazioni','Valuta']);
   if(poIn.length)alerts.push(['info',`<b>${poIn.length} ordine fornitore in arrivo</b> · ${esc(forn(poIn[0].forn).nome)} il ${fD(poIn[0].consegna)}`,'ordini','Dettagli']);
+  {const y=daysAgo(1);if(crmDay(y).n&&!S.chiusureRT.some(x=>dayStart(x.giorno).getTime()===y.getTime()))alerts.push(['warn','<b>Manca la chiusura dell\'RT di ieri</b> · inseriscila per controllare i corrispettivi','vendite','Inserisci'])}
   if(isTit()){const dov=[...S.fatture,...S.spese].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=7);const scd=dov.filter(x=>diffDays(x.scadenza,NOW)<0);if(dov.length)alerts.push([scd.length?'bad':'warn',`<b>${dov.length} pagamenti entro 7 giorni${scd.length?' ('+scd.length+' già scaduti)':''}</b> · totale ${eur(sum(dov,x=>x.tot))}`,'spese','Scadenzario'])}
   const last=today.slice(-6).reverse();
   return head(`Buongiorno, ${ME().nome}`,`${NOW.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · dati aggiornati alle ${fT(NOW)}`,`<button class="btn primary" data-act="go" data-v="cassa">${ic('cart',15)} Nuova vendita</button>`)+
@@ -725,12 +727,15 @@ function pickCustomer(cb){
   PICK={list,cb};
 }
 let PICK=null;
+const REPARTI={4:'Reparto 1 · Frutta e verdura (IVA 4%)',10:'Reparto 2 · IVA 10%',22:'Reparto 3 · IVA 22%'};
+function rtSplit(cart,tot){const lordo=sum(cart,r=>Math.round(r.q*r.pr))||1;const rep={};cart.forEach(r=>{const p=prod(r.p);rep[p.iva]=(rep[p.iva]||0)+Math.round(r.q*r.pr)});const ks=Object.keys(rep).sort((a,b)=>a-b);let acc=0;return ks.map((k,i)=>{const v=i===ks.length-1?tot-acc:Math.round(rep[k]*tot/lordo);acc+=v;return{k,v}})}
+function rtBox(t){const sp=rtSplit(UI.cart,t.tot);return `<div class="card" style="border:2px solid var(--citrus);box-shadow:none"><div class="card-b stack" style="gap:6px"><div class="small" style="font-weight:700;color:var(--citrus);letter-spacing:.04em">DA BATTERE SUL REGISTRATORE TELEMATICO</div>${sp.map(x=>`<div class="tot-row" style="align-items:baseline"><span>${REPARTI[x.k]||'Reparto IVA '+x.k+'%'}</span><b class="num" style="font-size:20px">${eur(x.v)}</b></div>`).join('')}<div class="small muted">Batti questi importi sui reparti dell'RT e chiudi lo scontrino con lo stesso metodo di pagamento. Il CRM tiene già il dettaglio dei prodotti.</div></div></div>`}
 function payModal(){
   const t=cartTot();let met='Contanti';
   const body=()=>`<div style="text-align:center"><div class="muted">Totale da incassare</div><div class="tot-big">${eur(t.tot)}</div></div>
    <div class="seg" style="align-self:center">${['Contanti','Carta','Buoni pasto'].map(m=>`<button type="button" data-act="payM" data-v="${m}" class="${met===m?'on':''}">${m}</button>`).join('')}</div>
    <div id="pay-x">${met==='Contanti'?`<div class="field"><label for="pay-r">Contanti ricevuti (€)</label><input id="pay-r" class="inp num" inputmode="decimal" data-in="payR" placeholder="es. 20"></div><div id="pay-resto" class="small"></div>`:`<div class="alert info">Il pagamento con ${met.toLowerCase()} si effettua sul POS: qui viene solo registrato.</div>`}</div>
-   <div class="alert warn small">Il documento commerciale fiscale va emesso dal Registratore Telematico (non collegato in questa demo).</div>`;
+   ${rtBox(t)}`;
   openModal('Pagamento',body(),[{label:'Annulla'},{label:'Conferma vendita',cls:'primary',fn:()=>{completeSale(met)}}]);
   PAYM=m=>{met=m;$('.modal-b').innerHTML=body()};
 }
@@ -744,7 +749,7 @@ function completeSale(pag){
   if(c&&punti){c.punti+=punti;S.fedeltaMov.unshift({data:new Date().toISOString(),cliente:c.id,tipo:'Accredito',punti,nota:'Scontrino n. '+n})}
   log('Vendita',`Scontrino n. ${n} · ${eur(t.tot)} · ${pag}${c?' · '+cliNome(c):''}${UI.cartSconto?' · sconto '+UI.cartSconto+'%':''}`);
   UI.cart=[];UI.cartCliente=null;UI.cartSconto=0;save();render();
-  toast(`Vendita n. ${n} registrata${punti?' · +'+punti+' punti a '+c.nome:''}.`);
+  toast(`Vendita n. ${n} registrata${punti?' · +'+punti+' punti a '+c.nome:''}. Ricorda di battere lo scontrino sull'RT.`);
   if(short.length)toast('Giacenza insufficiente per: '+short.join(', ')+'. Verifica l\'inventario.','warn');
 }
 
@@ -772,9 +777,35 @@ VIEWS.vendite=()=>{
     <div class="field"><label for="cc-c">Contanti contati (€)</label><input id="cc-c" class="inp num" placeholder="Conta il cassetto e inserisci"></div>
     <div class="small muted">Contanti attesi nel cassetto: <b class="num">${eur(cash+10000)}</b> (fondo + incasso in contanti)</div>
     <button class="btn primary" style="justify-content:center" data-act="closeCash" data-v="${cash}">Calcola differenza e chiudi</button>
-    <div class="small muted">Confronta poi il totale con la chiusura giornaliera del Registratore Telematico.</div>
-  </div></div></div>`;
+    <div class="small muted">Poi registra qui sotto la chiusura giornaliera dell'RT per controllare che i totali coincidano.</div>
+  </div></div></div>`+rtCard();
 };
+function crmDay(a){const b=new Date(a);b.setDate(b.getDate()+1);const vs=salesIn(new Date(a),b);return{tot:sum(vs,v=>v.tot),n:vs.length}}
+function rtCard(){
+  const rows=[];for(let d=0;d<=7;d++){const a=daysAgo(d);const c=crmDay(a);const z=S.chiusureRT.find(x=>dayStart(x.giorno).getTime()===a.getTime());if(!c.n&&!z)continue;rows.push({a,c,z,d})}
+  const st=r=>{if(!r.z)return r.d===0?{t:'Da inserire a fine giornata',c:'info'}:{t:'Chiusura mancante',c:'warn'};const df=r.z.rt-r.c.tot;return df===0?{t:'Quadra',c:'ok'}:{t:'Differenza '+(df>0?'+':'')+eur(df),c:'bad'}};
+  return `<div class="card" style="margin-top:16px"><div class="card-h" style="flex-wrap:wrap"><div><h2>Chiusure del Registratore Telematico</h2><div class="small muted">L'RT non è collegato: ogni sera inserisci il totale della chiusura giornaliera e il CRM lo confronta con le vendite registrate.</div></div><button class="btn primary" data-act="rtClose">Registra chiusura di oggi</button></div>
+  <div class="tblwrap"><table class="tbl"><thead><tr><th>Giorno</th><th class="r">Vendite nel CRM</th><th class="r">Totale RT</th><th class="r">Scontrini CRM / RT</th><th>Esito</th><th>Chiusura</th></tr></thead><tbody>
+  ${rows.map(r=>{const s=st(r);return `<tr><td>${r.a.toLocaleDateString('it-IT',{weekday:'short',day:'numeric',month:'short'})}</td><td class="r">${eur(r.c.tot)}</td><td class="r">${r.z?'<b>'+eur(r.z.rt)+'</b>':'—'}</td><td class="r">${r.c.n} / ${r.z&&r.z.docs!=null?r.z.docs:'—'}</td><td><span class="chip ${s.c}">${s.t}</span>${r.z&&r.z.nota?`<div class="small muted">${esc(r.z.nota)}</div>`:''}</td><td class="small muted">${r.z?'n. '+r.z.z+' · '+esc(r.z.fonte):''}</td></tr>`}).join('')}
+  </tbody></table></div><div class="card-b small muted">Il totale ufficiale dei corrispettivi è quello dell'RT, trasmesso all'Agenzia delle Entrate. Il CRM serve a controllare e a sapere cosa si è venduto.</div></div>`;
+}
+function rtCloseModal(){
+  const c=crmDay(daysAgo(0));const z=S.chiusureRT.find(x=>dayStart(x.giorno).getTime()===daysAgo(0).getTime());
+  const last=Math.max(0,...S.chiusureRT.map(x=>x.z));
+  openModal('Chiusura giornaliera del Registratore Telematico',`<div class="alert info small">Stampa la chiusura giornaliera sull'RT come fai ogni sera, poi copia qui il totale e il numero della chiusura, oppure fotografa lo scontrino di chiusura.</div>
+  <div class="grid g2"><div class="field"><label for="rt-t">Totale corrispettivi della giornata (€)</label><input id="rt-t" class="num" inputmode="decimal" value="${z?(z.rt/100).toFixed(2).replace('.',','):''}" placeholder="es. 486,30"></div><div class="field"><label for="rt-z">Numero chiusura</label><input id="rt-z" class="num" value="${z?z.z:last+1}"></div></div>
+  <div class="field"><label for="rt-n">Numero di documenti commerciali (facoltativo)</label><input id="rt-n" class="num" inputmode="numeric"></div>
+  <label class="btn" for="rt-foto" style="justify-content:center">${ic('scan',15)} Fotografa lo scontrino di chiusura</label><input id="rt-foto" type="file" accept="image/*" hidden>
+  <div class="small muted" id="rt-foto-msg">Nella versione completa il totale viene letto dalla foto. In questa demo la lettura è simulata.</div>
+  <div class="tot-row" style="border-top:1px solid var(--line);padding-top:10px"><span>Vendite registrate oggi nel CRM</span><b class="num">${eur(c.tot)} · ${c.n} scontrini</b></div>`,
+  [{label:'Annulla'},{label:'Salva e confronta',cls:'primary',fn:()=>{const v=Math.round(parseFloat(val('rt-t').replace(/\./g,'').replace(',','.'))*100);if(isNaN(v)||v<0){toast('Inserisci il totale della chiusura dell\'RT.','warn');return false}
+    const rec={giorno:daysAgo(0).toISOString(),z:+val('rt-z')||last+1,rt:v,docs:val('rt-n')?+val('rt-n'):null,nota:'',utente:ME().nome,fonte:RTFOTO?'Foto della chiusura':'Inserita a mano'};
+    const df=v-c.tot;if(df)rec.nota=df>0?'L\'RT ha incassato più del CRM: forse una vendita non registrata sul tablet':'Il CRM ha più vendite dell\'RT: forse uno scontrino non battuto o battuto con importo diverso';
+    S.chiusureRT=S.chiusureRT.filter(x=>dayStart(x.giorno).getTime()!==daysAgo(0).getTime());S.chiusureRT.push(rec);RTFOTO=false;
+    log('Chiusura RT',`Chiusura n. ${rec.z} · RT ${eur(v)} · CRM ${eur(c.tot)} · differenza ${eur(df)}`);render();toast(df===0?'Chiusura registrata: i totali coincidono.':'Chiusura registrata con una differenza di '+eur(df)+'.',df===0?'ok':'warn')}}]);
+}
+let RTFOTO=false;
+document.addEventListener('change',e=>{if(e.target.id==='rt-foto'&&e.target.files[0]){RTFOTO=true;const c=crmDay(daysAgo(0));const i=document.getElementById('rt-t');if(i)i.value=(c.tot/100).toFixed(2).replace('.',',');const n=document.getElementById('rt-n');if(n)n.value=c.n;const m=document.getElementById('rt-foto-msg');if(m)m.innerHTML='<b>Foto caricata:</b> '+esc(e.target.files[0].name)+'. Valori letti (simulati): controllali con lo scontrino prima di salvare.'}});
 function saleModal(id){
   const v=S.vendite.find(x=>x.id===id);const c=cli(v.cliente);
   const body=`<div class="grid g2 small"><div><span class="muted">Data</span><div>${fDT(v.data)}</div></div><div><span class="muted">Cliente</span><div>${esc(cliNome(c))}</div></div><div><span class="muted">Operatore</span><div>${esc(v.op)}</div></div><div><span class="muted">Pagamento</span><div>${esc(v.pag)}</div></div></div>
@@ -1498,7 +1529,7 @@ $('#gsearch').addEventListener('input',e=>{
   const ps=S.prodotti.filter(p=>norm(p.nome).replace(/\s/g,'').includes(q)||p.plu===q).slice(0,5);
   box.innerHTML=(cs.map(c=>`<button data-act="gC" data-v="${c.id}"><span class="avatar" style="width:24px;height:24px;font-size:10px">${ini(c)}</span>${esc(cliNome(c))}<span class="muted small" style="margin-left:auto">Cliente</span></button>`).join('')+ps.map(p=>`<button data-act="gP" data-v="${p.id}"><span style="width:10px;height:10px;border-radius:50%;background:${CAT_COL[p.cat]}"></span>${esc(p.nome)} <span class="muted small">${eur(p.prezzo)}/${p.unita}</span><span class="muted small" style="margin-left:auto">Prodotto</span></button>`).join(''))||'<div class="empty small">Nessun risultato</div>';box.hidden=false;
 });
-Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS);
+Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS,{rtClose:rtCloseModal});
 A.gC=d=>{$('#gresults').hidden=true;$('#gsearch').value='';cliModal(d.v)};
 A.gP=d=>{$('#gresults').hidden=true;$('#gsearch').value='';prodModal(d.v)};
 try{const t=localStorage.getItem('crmibra_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
