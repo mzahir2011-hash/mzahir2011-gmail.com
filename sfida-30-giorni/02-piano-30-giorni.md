@@ -1,57 +1,62 @@
-# 02 · Piano operativo dei 30 giorni
+# 02 · الخطة التنفيذية للثلاثين يومًا
 
-Ogni giorno contiene: **routine fissa** (Corano, studio, lettura, sport, famiglia, preghiere) + **1 attività Al-Tarbal** + **1 attività Al-Jisr** (le 2 ore di ciascuna istituzione servono a completare quell'attività). Le attività non completate passano al giorno dopo (cruscotto → "Priorità di domani").
+كل يوم: **روتين ثابت** (القرآن، الدراسة، القراءة، الرياضة، الأسرة، الصلوات) + **مهمة للطربال** + **مهمة للجسر** (الساعتان لكل مؤسسة مخصصتان لإنجاز تلك المهمة). ما لم يُنجز ينتقل إلى الغد (اللوحة ← «أولويات الغد»).
 
-La domenica è giorno di **revisione settimanale**: niente attività nuove, solo recupero arretrati e rapporto.
+الأحد **يوم مراجعة أسبوعية**: لا مهام جديدة، بل استدراك المتأخرات والتقرير.
 
-## Settimana 1 · 23–29 novembre — Impostazione e inventario
+## الأسبوع 1 · التأسيس والجرد
 
-| G | Data | Al-Tarbal | Al-Jisr |
-|---|------|-----------|---------|
-| 1 | lun 23/11 | Sessione di avvio: elenco dei titoli e metodo di conteggio | Inventario iniziale delle attività: studenti, insegnanti, corsi, quote, strumenti in uso |
-| 2 | mar 24/11 | Conteggio fisico: prima metà del magazzino | P1 · Bozza modello di ricevuta (AR/IT) |
-| 3 | mer 25/11 | Conteggio fisico completato e confronto con le 1.500 dichiarate | P1 · Numerazione progressiva e regole di emissione |
-| 4 | gio 26/11 | Prezzi verificati per titolo (costo, pubblico, ingrosso) | P1 · Collegamento ricevuta ↔ studente ↔ pagamento |
-| 5 | ven 27/11 | Bozza del catalogo commerciale | P1 · Archivio e storico; prova con 5 ricevute reali → **P1 operativo** |
-| 6 | sab 28/11 | Offerte e strategie di vendita (pacchetti, sconti per quantità) | P4 · Situazione iniziale degli iscritti; avvio registro richieste |
-| 7 | dom 29/11 | **Revisione settimanale 1** | **Revisione settimanale 1** |
+| ي | التاريخ | الطربال | الجسر |
+|---|------|---------|-------|
+| 1 | الاثنين 23/11 | جلسة الانطلاق: قائمة العناوين وطريقة العدّ | الجرد الأولي للأنشطة: الطلاب، المعلمون، الدورات، الرسوم، الأدوات المستعملة |
+| 2 | الثلاثاء 24/11 | العدّ الفعلي: النصف الأول من المخزون | م1 · مسودة نموذج الوصل (عربي/إيطالي) |
+| 3 | الأربعاء 25/11 | إكمال العدّ ومطابقته مع 1500 المصرّح بها | م1 · الترقيم التسلسلي وقواعد الإصدار |
+| 4 | الخميس 26/11 | أسعار مؤكدة لكل عنوان (التكلفة، العموم، الجملة) | م1 · ربط الوصل بالطالب وبالدفعة |
+| 5 | الجمعة 27/11 | مسودة الكتالوج التجاري | م1 · الأرشيف والسجل؛ تجربة بـ 5 وصولات حقيقية |
+| 6 | السبت 28/11 | العروض واستراتيجيات البيع | **م4 · الوضع الأولي للمسجلين؛ إطلاق سجل الطلبات** |
+| 7 | الأحد 29/11 | **المراجعة الأسبوعية 1** | **المراجعة الأسبوعية 1** |
 
-## Settimana 2 · 30 novembre – 6 dicembre — Materiali e sistema contabile
+## الأسبوع 2 · المواد والنظام المحاسبي
 
-| G | Data | Al-Tarbal | Al-Jisr |
-|---|------|-----------|---------|
-| 8 | lun 30/11 | Lista di 30 potenziali clienti (moschee, centri, librerie, associazioni) | P2 · Struttura studenti: anagrafica, iscrizioni, quote |
-| 9 | mar 01/12 | Materiale pubblicitario in arabo | P2 · Insegnanti: anagrafica, assegnazioni, compensi |
-| 10 | mer 02/12 | Materiale pubblicitario in italiano | P2 · Calendario lezioni e stati (programmata, svolta, annullata, recuperata) |
-| 11 | gio 03/12 | Primi 10 contatti e invio catalogo | P2 · Registro presenze e assenze |
-| 12 | ven 04/12 | Altri 10 contatti + richiami | P2 · Contabilità: dovuti, pagati, saldi, scadenze, entrate e uscite |
-| 13 | sab 05/12 | Primi ordini: registro consegne e pagamenti | P2 · Report e caricamento dei dati reali |
-| 14 | dom 06/12 | **Revisione settimanale 2** | **Revisione 2** + prova completa del sistema P2 |
+| ي | التاريخ | الطربال | الجسر |
+|---|------|---------|-------|
+| 8 | الاثنين 30/11 | قائمة 30 زبونًا محتملًا | م2 · الطلاب: البيانات، التسجيل، الرسوم |
+| 9 | الثلاثاء 1/12 | مواد إعلانية بالعربية | م2 · المعلمون: البيانات، الإسناد، الأجور |
+| 10 | الأربعاء 2/12 | مواد إعلانية بالإيطالية | م2 · جدول الحصص وحالاتها |
+| 11 | الخميس 3/12 | أول 10 اتصالات وإرسال الكتالوج | م2 · سجل الحضور والغياب |
+| 12 | الجمعة 4/12 | 10 اتصالات أخرى + متابعات | م2 · المحاسبة: المستحق، المدفوع، الأرصدة، الآجال، المداخيل والمصاريف |
+| 13 | السبت 5/12 | أول الطلبيات: سجل التسليم والدفع | م2 · التقارير وإدخال البيانات الحقيقية |
+| 14 | الأحد 6/12 | **المراجعة الأسبوعية 2** | **المراجعة 2 + تجربة كاملة لنظام م2** |
 
-## Settimana 3 · 7–13 dicembre — Campagne
+## الأسبوع 3 · الحملات
 
-| G | Data | Al-Tarbal | Al-Jisr |
-|---|------|-----------|---------|
-| 15 | lun 07/12 | Campagna: 10 contatti + richiami | P3 · Pubblico di riferimento e piano pubblicitario |
-| 16 | mar 08/12 | Campagna: 10 contatti + richiami | P3 · Contenuti in arabo |
-| 17 | mer 09/12 | Consegne e riscossione incassi | P3 · Contenuti in italiano |
-| 18 | gio 10/12 | Campagna: nuovi canali (moschee, eventi) | P3 · Immagini e video |
-| 19 | ven 11/12 | Campagna: 10 contatti + richiami | P3 · Canali di comunicazione e modulo di contatto |
-| 20 | sab 12/12 | Consegne e incassi | P3 · **Lancio della campagna** |
-| 21 | dom 13/12 | **Revisione settimanale 3** | **Revisione settimanale 3** |
+| ي | التاريخ | الطربال | الجسر |
+|---|------|---------|-------|
+| 15 | الاثنين 7/12 | حملة: 10 اتصالات + متابعات | م3 · الجمهور المستهدف والخطة الإعلانية |
+| 16 | الثلاثاء 8/12 | حملة: 10 اتصالات + متابعات | م3 · محتوى بالعربية |
+| 17 | الأربعاء 9/12 | التسليم وتحصيل المبالغ | م3 · محتوى بالإيطالية |
+| 18 | الخميس 10/12 | حملة: قنوات جديدة (مساجد، فعاليات) | م3 · صور وفيديوهات |
+| 19 | الجمعة 11/12 | حملة: 10 اتصالات + متابعات | م3 · قنوات التواصل ونموذج الاتصال |
+| 20 | السبت 12/12 | التسليم والتحصيل | **م3 · إطلاق الحملة** |
+| 21 | الأحد 13/12 | **المراجعة الأسبوعية 3** | **المراجعة الأسبوعية 3** |
 
-## Settimana 4 · 14–22 dicembre — Conversione e chiusura
+## الأسبوع 4 · التحويل والتسجيل
 
-| G | Data | Al-Tarbal | Al-Jisr |
-|---|------|-----------|---------|
-| 22 | lun 14/12 | Campagna + offerta di fine anno | P4 · Risposta a tutte le richieste ricevute |
-| 23 | mar 15/12 | Campagna: 10 contatti + richiami | P4 · Lezioni di prova e richiami |
-| 24 | mer 16/12 | Riscossione incassi arretrati | P3 · Monitoraggio della campagna (contatti ricevuti) |
-| 25 | gio 17/12 | Campagna: clienti già serviti (riordino) | P4 · Conversione delle richieste in iscrizioni |
-| 26 | ven 18/12 | Consegne e incassi | P2 · Verifica saldi e crediti da riscuotere |
-| 27 | sab 19/12 | Campagna: ultimi contatti dell'anno | P4 · Richiami finali delle richieste aperte |
-| 28 | dom 20/12 | **Revisione settimanale 4** | **Revisione settimanale 4** |
-| 29 | lun 21/12 | Chiusura incassi e inventario finale | Consolidamento: P1–P4 in uso, dati aggiornati |
-| 30 | mar 22/12 | **Rapporto finale Al-Tarbal** | **Rapporto finale Al-Jisr** + rapporto finale dei 30 giorni |
+| ي | التاريخ | الطربال | الجسر |
+|---|------|---------|-------|
+| 22 | الاثنين 14/12 | حملة + عرض نهاية السنة | م4 · الرد على كل الطلبات الواردة |
+| 23 | الثلاثاء 15/12 | حملة: 10 اتصالات + متابعات | م4 · حصص تجريبية ومتابعات |
+| 24 | الأربعاء 16/12 | تحصيل المتأخرات | م3 · متابعة نتائج الحملة |
+| 25 | الخميس 17/12 | حملة: الزبائن السابقون (إعادة الطلب) | م4 · تحويل الطلبات إلى تسجيلات |
+| 26 | الجمعة 18/12 | التسليم والتحصيل | م2 · مراجعة الأرصدة والديون المستحقة |
+| 27 | السبت 19/12 | حملة: آخر اتصالات السنة | م4 · المتابعة الأخيرة للطلبات المفتوحة |
+| 28 | الأحد 20/12 | **المراجعة الأسبوعية 4** | **المراجعة الأسبوعية 4** |
 
-> Nota commerciale: il Ramadan 1448 dovrebbe iniziare intorno all'inizio di febbraio 2027. Moschee e centri spesso fanno ordini prima di quel periodo: è un argomento utile nelle campagne di dicembre (data indicativa, da confermare).
+## الأسبوع 5 · الإغلاق
+
+| ي | التاريخ | الطربال | الجسر |
+|---|------|---------|-------|
+| 29 | الاثنين 21/12 | إغلاق التحصيل والجرد النهائي | التثبيت: م1–م4 قيد الاستعمال والبيانات محدّثة |
+| 30 | الثلاثاء 22/12 | **التقرير النهائي للطربال** | **التقرير النهائي للجسر + التقرير النهائي للثلاثين يومًا** |
+
+> ملاحظة تجارية: يُتوقع أن يبدأ رمضان 1448 في أوائل فبراير 2027 تقريبًا. المساجد والمراكز كثيرًا ما تطلب الكتب قبله، وهي حجة مفيدة في حملات ديسمبر (تاريخ تقريبي يُتحقق منه).

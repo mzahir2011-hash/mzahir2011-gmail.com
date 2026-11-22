@@ -1,33 +1,33 @@
-# 04 · Dati mancanti
+# 04 · البيانات الناقصة
 
-Non ho inventato nessuno di questi dati. Finché mancano, il cruscotto mostra "da definire" e calcola solo ciò che è verificato. Rispondi anche a pezzi: le domande **A** servono già il 23/11.
+لم أخترع أيًّا من هذه البيانات. ما دامت ناقصة تُظهر اللوحة «غير محدد» ولا تحسب إلا ما هو مؤكد. أجب ولو على دفعات: أسئلة **أ** مطلوبة يوم 23/11.
 
-## A · Necessari il primo giorno
+## أ · مطلوبة في اليوم الأول
 
-1. **Città** (per gli orari di Fajr, Dhuhr, Asr, Maghrib; Isha in moschea resta alle 20:00).
-2. **Al-Jisr – numero attuale di iscritti** (situazione iniziale del Progetto 4).
-3. **Al-Jisr – strumenti in uso oggi**: come si emettono ora le ricevute? Esiste già un registro Excel dei pagamenti? Ultimo numero di ricevuta emesso?
-4. **Al-Tarbal – chi fa il conteggio fisico** e dove si trovano le confezioni (un solo magazzino o più luoghi).
+1. **المدينة** (لمواقيت الفجر والظهر والعصر والمغرب؛ العشاء في المسجد ثابت 20:00).
+2. **الجسر – العدد الحالي للمسجلين** (الوضع الأولي للمشروع 4).
+3. **الجسر – الأدوات المستعملة حاليًا**: كيف تُصدر الوصولات الآن؟ هل هناك سجل Excel للدفعات؟ ما آخر رقم وصل صدر؟
+4. **الطربال – من يقوم بالعدّ الفعلي** وأين توجد الحزم (مخزن واحد أم عدة أماكن).
 
-## B · Necessari entro la fine della settimana 1
+## ب · مطلوبة قبل نهاية الأسبوع 1
 
-5. **Corano – obiettivi giornalieri**: memorizzazione (quante righe o pagine al giorno e da dove si parte), ripasso (pagine/giorno), lettura (pagine o juz' al giorno).
-6. **Formazione e specializzazione**: quali testi/libri per i 30 giorni (titolo, autore) e quante ore al giorno per ciascuno.
-7. **Lettura e cultura**: libri in corso o previsti, pagine al giorno.
-8. **Al-Tarbal – elenco titoli e prezzi verificati** (costo, prezzo pubblico, eventuale ingrosso).
-9. **Al-Tarbal – obiettivo di vendita dei 30 giorni** (quante confezioni e/o quanti euro).
-10. **Al-Jisr – dati di base**: numero di insegnanti, corsi attivi, quote mensili, modalità di pagamento accettate.
-11. **Al-Jisr – obiettivo di nuove iscrizioni** entro il 22/12.
+5. **القرآن – الأهداف اليومية**: الحفظ (كم سطرًا أو صفحة يوميًا ومن أين البداية)، المراجعة (صفحات/يوم)، التلاوة (صفحات أو أجزاء/يوم).
+6. **التكوين والتخصص**: الكتب المقررة للثلاثين يومًا (العنوان، المؤلف) وعدد الساعات اليومية لكل منها.
+7. **القراءة والثقافة**: الكتب الجارية أو المبرمجة، وعدد الصفحات يوميًا.
+8. **الطربال – قائمة العناوين والأسعار المؤكدة** (التكلفة، سعر العموم، سعر الجملة إن وُجد).
+9. **الطربال – هدف البيع في الثلاثين يومًا** (عدد الحزم و/أو المبلغ باليورو).
+10. **الجسر – البيانات الأساسية**: عدد المعلمين، الدورات القائمة، الرسوم الشهرية، طرق الدفع المقبولة.
+11. **الجسر – هدف التسجيلات الجديدة** قبل 22/12.
 
-## C · Utili per la campagna (settimane 2–3)
+## ج · مفيدة للحملة (الأسبوعان 2–3)
 
-12. Canali già attivi (WhatsApp, Facebook, Instagram, sito) e numero di contatti/follower.
-13. Budget disponibile per la pubblicità (anche zero).
-14. Logo e identità grafica di Al-Tarbal e Al-Jisr.
-15. Contatti già noti di moschee, centri, librerie e associazioni.
+12. القنوات القائمة (واتساب، فيسبوك، إنستغرام، موقع) وعدد المتابعين.
+13. الميزانية المتاحة للإعلان (ولو صفرًا).
+14. شعار وهوية الطربال والجسر.
+15. جهات اتصال معروفة: مساجد، مراكز، مكتبات، جمعيات.
 
-## D · Salute e famiglia
+## د · الصحة والأسرة
 
-16. Obiettivi personali: minuti di sport al giorno, ore di sonno, orario di sveglia e di riposo, tempo minimo con la famiglia e con i figli.
+16. أهداف شخصية: دقائق الرياضة يوميًا، ساعات النوم، وقت الاستيقاظ والنوم، أدنى وقت مع الأسرة والأبناء.
 
-Tutti questi valori si inseriscono una sola volta in **Impostazioni** nel cruscotto.
+تُدخل كل هذه القيم مرة واحدة في **الإعدادات** داخل اللوحة.

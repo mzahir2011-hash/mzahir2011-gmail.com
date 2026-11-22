@@ -1,4 +1,4 @@
-N.;Titolo / confezione;Lingua;Quantità contata;Prezzo unitario (€);Posizione in magazzino;Contato da;Data;Note
+الرقم;العنوان / الحزمة;اللغة;الكمية المعدودة;سعر الوحدة (€);المكان في المخزن;عدّه;التاريخ;ملاحظات
 1;;;;;;;;
 2;;;;;;;;
 3;;;;;;;;
@@ -9,4 +9,4 @@ N.;Titolo / confezione;Lingua;Quantità contata;Prezzo unitario (€);Posizione 
 8;;;;;;;;
 9;;;;;;;;
 10;;;;;;;;
-;TOTALE (deve risultare 1.500);;;;;;;
+;المجموع (يجب أن يساوي 1500);;;;;;;

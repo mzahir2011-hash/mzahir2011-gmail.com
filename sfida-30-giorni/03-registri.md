@@ -1,53 +1,53 @@
-# 03 · Registri
+# 03 · السجلات
 
-Tutti i registri sono nel **cruscotto** (`cruscotto.html`). Qui è descritta la loro struttura, così i dati restano consultabili anche fuori dal cruscotto (esportazione JSON in Impostazioni).
+كل السجلات موجودة في **لوحة القيادة** (`cruscotto.html`). هنا وصف بنيتها لتبقى البيانات مفهومة خارج اللوحة أيضًا (تصدير JSON من الإعدادات).
 
-## 1. Registro centrale delle attività (una scheda per giorno)
+## 1. السجل المركزي للمهام (بطاقة لكل يوم)
 
-| Campo | Contenuto |
-|-------|-----------|
-| 3 priorità | testo + stato: ✓ completata · ◐ parziale · ✗ non completata |
-| Corano | memorizzazione (quantità + da/a), ripasso (pagine), lettura (pagine), adhkār mattina e sera |
-| Formazione | ore + testo/capitolo |
-| Specializzazione | ore + testo/capitolo |
-| Lettura | pagine + libro |
-| Ore istituzionali | Al-Tarbal (ore), Al-Jisr (ore) — separate dallo studio |
-| Salute e famiglia | sport (min), sonno (ore), famiglia (min), figli (min) |
-| Preghiere | Fajr, Dhuhr, Asr, Maghrib, Isha: a casa / in moschea |
-| Ostacoli e note | testo libero |
-| Priorità di domani | 3 righe (proposte in automatico: attività non completate + piano del giorno dopo) |
+| الحقل | المحتوى |
+|-------|---------|
+| الأولويات الثلاث | نص + حالة: ✓ أُنجزت · ◐ جزئيًا · ✗ لم تُنجز |
+| القرآن | الحفظ (الكمية + من/إلى)، المراجعة (صفحات)، التلاوة (صفحات)، أذكار الصباح والمساء |
+| التكوين | ساعات + الكتاب/الباب |
+| التخصص | ساعات + الكتاب/الباب |
+| القراءة | صفحات + الكتاب |
+| ساعات المؤسستين | الطربال (ساعات)، الجسر (ساعات): منفصلة عن الدراسة |
+| الصحة والأسرة | الرياضة (د)، النوم (س)، الأسرة (د)، الأبناء (د) |
+| الصلوات | الفجر، الظهر، العصر، المغرب، العشاء: في البيت / في المسجد |
+| العوائق والملاحظات | نص حر |
+| أولويات الغد | 3 أسطر (تُقترح آليًا: ما لم يُنجز + خطة الغد) |
 
-## 2. Registro Al-Tarbal (1.500 confezioni)
+## 2. سجل الطربال (1500 حزمة)
 
-**Inventario per titolo** — compilato con il conteggio fisico dei giorni 1–3:
+**الجرد حسب العنوان**: يُملأ بالعدّ الفعلي في الأيام 1–3:
 
-| Titolo / confezione | Quantità contata | Prezzo unitario (€) |
-|---------------------|------------------|---------------------|
+| العنوان / الحزمة | الكمية المعدودة | سعر الوحدة (€) |
+|------------------|-----------------|----------------|
 
-Controllo automatico: la somma delle quantità deve coincidere con 1.500; in caso contrario il cruscotto segnala la differenza.
-Un modello stampabile per il conteggio è in [`registri/tarbal-inventario.csv`](registri/tarbal-inventario.csv).
+مراقبة آلية: يجب أن يساوي مجموع الكميات 1500، وإلا نبّهت اللوحة إلى الفرق.
+نموذج قابل للطباعة للعدّ: [`registri/tarbal-inventario.csv`](registri/tarbal-inventario.csv).
 
-**Registro vendite** — una riga per vendita:
+**سجل المبيعات**: سطر لكل عملية بيع:
 
-| Data | Cliente | Nuovo cliente | Titolo | Quantità | Importo (€) | Incassato | Note |
-|------|---------|---------------|--------|----------|-------------|-----------|------|
+| التاريخ | الزبون | زبون جديد | العنوان | الكمية | المبلغ (€) | محصّل | ملاحظات |
+|---------|--------|-----------|---------|--------|------------|-------|---------|
 
-## 3. Inventario iniziale delle attività Al-Jisr
+## 3. الجرد الأولي لمهام الجسر
 
-Elenco delle 28 attività dei 4 progetti (con scadenza): visibile e spuntabile nella scheda **Al-Jisr** del cruscotto.
+28 مهمة للمشاريع الأربعة (مع آجالها): ظاهرة وقابلة للتأشير في تبويب **الجسر** باللوحة.
 
-| Progetto | Attività | Scadenza |
-|----------|----------|----------|
-| P1 Ricevute | modello · numerazione · collegamento studente/pagamento · archivio e storico · prova con 5 ricevute | 24–27/11 |
-| P2 Contabilità e lezioni | studenti · insegnanti · calendario · presenze · contabilità · report · prova completa | 30/11–06/12, verifica 18/12 |
-| P3 Campagna | pubblico · piano · contenuti AR · contenuti IT · immagini/video · canali · lancio · monitoraggio | 07–16/12 |
-| P4 Iscritti | situazione iniziale · registro richieste · risposte · prove · conversione · richiami · misura settimanale | 28/11–19/12 |
+| المشروع | المهام | الأجل |
+|---------|--------|-------|
+| م1 الوصولات | النموذج · الترقيم · الربط بالطالب والدفعة · الأرشيف والسجل · تجربة بـ 5 وصولات | 24–27/11 |
+| م2 المحاسبة والحصص | الطلاب · المعلمون · جدول الحصص · الحضور · المحاسبة · التقارير · تجربة كاملة | 30/11–6/12، مراجعة 18/12 |
+| م3 الحملة | الجمهور · الخطة · محتوى عربي · محتوى إيطالي · صور وفيديو · القنوات · الإطلاق · المتابعة | 7–16/12 |
+| م4 المسجلون | الوضع الأولي · سجل الطلبات · الردود · حصص تجريبية · التحويل · المتابعات · القياس الأسبوعي | 28/11–19/12 |
 
-Prima di costruire, la sessione di avvio deve chiarire **cosa esiste già** (vedi 04): sul tuo account c'è già una procedura per le ricevute «وصل أداء» e le richieste «طلب أداء» collegata a un registro Excel dell'istituto. Se è già in uso, il Progetto 1 parte da lì (numerazione e archivio) invece che da zero.
+قبل البناء يجب أن توضّح جلسة الانطلاق **ما هو موجود أصلًا** (انظر 04): في حسابك إجراء جاهز لـ«وصل أداء» و«طلب أداء» مربوط بسجل Excel للمعهد. إن كان مستعملًا، ينطلق المشروع 1 منه (الترقيم والأرشيف) لا من الصفر.
 
-**Registro richieste / potenziali iscritti** — una riga per persona:
+**سجل الطلبات / المسجلين المحتملين**: سطر لكل شخص:
 
-| Data | Nome | Canale | Corso / note | Stato | Prossimo contatto | Quota (€) |
-|------|------|--------|--------------|-------|-------------------|-----------|
+| التاريخ | الاسم | القناة | الدورة / ملاحظات | الحالة | موعد المتابعة | الرسوم (€) |
+|---------|-------|--------|------------------|--------|---------------|------------|
 
-Stati: Nuova richiesta → Contattato → Lezione di prova → **Iscritto** / Non interessato. Il cruscotto evidenzia i richiami scaduti.
+الحالات: طلب جديد ← تم الاتصال ← حصة تجريبية ← **مسجّل** / غير مهتم. تُبرز اللوحة المتابعات التي فات موعدها.

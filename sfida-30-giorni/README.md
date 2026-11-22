@@ -1,22 +1,22 @@
-# Sfida 30 giorni · 23 novembre – 22 dicembre 2026
+# تحدي الثلاثين يومًا · 23 نوفمبر – 22 ديسمبر 2026
 
-Sistema di organizzazione e monitoraggio dei sette ambiti: Corano, formazione religiosa e scientifica, specializzazione in educazione islamica, lettura, Istituzione Al-Tarbal, Istituto Al-Jisr, salute e famiglia.
+نظام تنظيم ومتابعة للمجالات السبعة: القرآن الكريم، التكوين الشرعي والعلمي، التخصص في التربية الإسلامية، القراءة والثقافة، مؤسسة الطربال، معهد الجسر، الصحة والأسرة.
 
-| File | Contenuto |
-|------|-----------|
-| [`cruscotto.html`](cruscotto.html) | **Cruscotto giornaliero**: registro centrale, KPI, Al-Tarbal, Al-Jisr, rapporti (giorno / settimana / finale) |
-| [01 · Quadro generale](01-quadro-generale.md) | I sette ambiti, KPI e formule |
-| [02 · Piano 30 giorni](02-piano-30-giorni.md) | Un'attività Al-Tarbal e una Al-Jisr per ogni giorno |
-| [03 · Registri](03-registri.md) | Registro centrale, registro delle 1.500 confezioni, inventario attività Al-Jisr, registro richieste |
-| [04 · Dati mancanti](04-dati-mancanti.md) | Domande a cui rispondere (nessun dato inventato) |
-| [05 · Programma del 23 novembre](05-programma-23-novembre.md) | Primo programma giornaliero |
-| [`registri/tarbal-inventario.csv`](registri/tarbal-inventario.csv) | Modello per il conteggio fisico del magazzino |
+| الملف | المحتوى |
+|------|---------|
+| [`cruscotto.html`](cruscotto.html) | **لوحة القيادة اليومية**: السجل المركزي، المؤشرات، الطربال، الجسر، أهم الرسائل، مواعيد التقويم، التقارير |
+| [01 · الإطار العام](01-quadro-generale.md) | المجالات السبعة والمؤشرات وطريقة حسابها |
+| [02 · خطة الثلاثين يومًا](02-piano-30-giorni.md) | مهمة للطربال ومهمة للجسر كل يوم |
+| [03 · السجلات](03-registri.md) | السجل المركزي، سجل 1500 حزمة، جرد مهام الجسر، سجل الطلبات |
+| [04 · البيانات الناقصة](04-dati-mancanti.md) | أسئلة تحتاج جوابك (لا بيانات مخترعة) |
+| [05 · برنامج 23 نوفمبر](05-programma-23-novembre.md) | برنامج اليوم الأول |
+| [`registri/tarbal-inventario.csv`](registri/tarbal-inventario.csv) | نموذج العدّ الفعلي للمخزون |
 
-## Uso quotidiano (circa 5 minuti)
+## الاستعمال اليومي (نحو 5 دقائق)
 
-1. **Mattina**: apri il cruscotto → scheda *Oggi*: le 3 priorità sono già proposte (piano + attività riportate da ieri).
-2. **Durante il giorno**: tocca ✓ sulle priorità, inserisci le quantità man mano.
-3. **Sera**: ostacoli + priorità di domani ("Proponi in automatico") → *Rapporti* → "Rapporto del giorno" → incolla in chat per la verifica.
-4. **Domenica**: "Rapporto della settimana".
+1. **صباحًا 07:30** يصلك تذكير التقويم بمهام اليوم؛ افتح اللوحة ← «اليوم»: الأولويات الثلاث جاهزة.
+2. **خلال اليوم**: المس ✓ على الأولويات، أدخل الأرقام، وسجّل الصلوات بلمسة (لمستان = في المسجد).
+3. **مساءً 21:00**: العوائق + أولويات الغد («اقتراح تلقائي») ← «التقارير» ← «تقرير اليوم» ← الصقه في المحادثة.
+4. **الأحد**: «تقرير الأسبوع».
 
-Il file `cruscotto.html` funziona anche aperto direttamente nel browser (dati salvati sul dispositivo; esportazione JSON in Impostazioni).
+التذكيرات في تقويم Google «خطة الخمس سنوات»: مهام كل صباح 07:30، العشاء في المسجد 20:00 (تنبيه قبل 20 دقيقة)، التقييم المسائي 21:00.
