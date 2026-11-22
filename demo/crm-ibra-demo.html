@@ -332,7 +332,8 @@ copy:'M9 9h11v11H9zM5 15H4V4h11v1',
 tag:'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
 wallet:'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7V6a2 2 0 0 1 2-2h11v3M16 13.5h.01',
 invoice:'M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21zM10 8h4M10 12h4M10 16h2',
-pl:'M3 3v18h18M7 14l4-4 3 3 5-6'
+pl:'M3 3v18h18M7 14l4-4 3 3 5-6',
+scan:'M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M7 12h10'
 };
 const ic=(n,s=17)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[n]}"/></svg>`;
 
@@ -1066,7 +1067,7 @@ VIEWS.acquisti=()=>{
     body=`<div class="grid g21"><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Fornitore</th><th class="r">Fatture 30 gg</th><th class="r">Acquistato 30 gg</th><th class="r">Da pagare</th><th>Prossima scadenza</th></tr></thead><tbody>${rows.map(r=>`<tr class="click" data-act="acqFornGo" data-v="${r.f.id}"><td><b>${esc(r.f.nome)}</b><div class="small muted">${esc(r.f.pagamento)}</div></td><td class="r">${r.n}</td><td class="r">${eur(r.a30)}</td><td class="r">${eur(r.dp)}</td><td>${r.nx?`${fD(r.nx.scadenza)} <span class="chip ${payState(r.nx).c}">${payState(r.nx).t}</span>`:'—'}</td></tr>`).join('')}</tbody></table></div></div>
     <div class="card"><div class="card-h"><h2>Acquisti per fornitore · 30 giorni</h2></div><div class="card-b">${hbars(rows.slice().sort((a,b)=>b.a30-a.a30).map(r=>({l:r.f.nome.replace(' (demo)',''),v:r.a30})))}</div></div></div>`;
   }
-  return head('Acquisti e fatture fornitori','Tutto quello che il negozio compra per la merce: fatture, scadenze e pagamenti',`<button class="btn" data-act="goOrdF">${ic('clipboard',15)} Ordini ai fornitori</button><button class="btn primary" data-act="newFatt">${ic('plus',15)} Registra fattura</button>`)+
+  return head('Acquisti e fatture fornitori','Tutto quello che il negozio compra per la merce: fatture, scadenze e pagamenti',`<button class="btn" data-act="goOrdF">${ic('clipboard',15)} Ordini ai fornitori</button><button class="btn citrus" data-act="scanDoc">${ic('scan',15)} Importa o scansiona</button><button class="btn primary" data-act="newFatt">${ic('plus',15)} Registra fattura</button>`)+
   `<div class="grid g4">${kpi('Acquistato nel mese',eur(sum(mese,x=>x.tot)),`${mese.length} documenti dal ${fD(ms)}`)}${kpi('Da pagare ai fornitori',eur(sum(dp,x=>x.tot)),`${dp.length} fatture aperte`)}${kpi('Scadute',eur(sum(scd,x=>x.tot)),`${scd.length} fatture`,scd.length?'var(--bad)':'')}${kpi('In scadenza entro 7 giorni',eur(sum(sett,x=>x.tot)),`${sett.length} fatture`)}</div>
   <div class="tabs" style="margin-top:16px"><button data-act="acqTab" data-v="fatture" class="${UI.acqTab==='fatture'?'on':''}">Fatture</button><button data-act="acqTab" data-v="fornitori" class="${UI.acqTab==='fornitori'?'on':''}">Riepilogo per fornitore</button></div>`+body;
 };
@@ -1081,7 +1082,7 @@ VIEWS.spese=()=>{
   const byCat={};mese.forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.tot);
   const cats=['Tutte',...SPESE_CAT.filter(c=>S.spese.some(x=>x.cat===c))];
   const scad=[...S.spese.map(x=>({...x,k:x.descr,coll:'spese'})),...S.fatture.map(x=>({...x,k:'Fattura '+forn(x.forn).nome.replace(' (demo)',''),coll:'fatture'}))].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=30).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
-  return head('Spese generali','Affitto, bollette, telefono, commercialista e tutte le altre spese del negozio',`<button class="btn primary" data-act="newSpesa" ${isTit()?'':'disabled'}>${ic('plus',15)} Nuova spesa</button>`)+
+  return head('Spese generali','Affitto, bollette, telefono, commercialista e tutte le altre spese del negozio',`<button class="btn citrus" data-act="scanDoc" ${isTit()?'':'disabled'}>${ic('scan',15)} Importa o scansiona</button><button class="btn primary" data-act="newSpesa" ${isTit()?'':'disabled'}>${ic('plus',15)} Nuova spesa</button>`)+
   `<div class="grid g4">${kpi('Spese del mese',eur(sum(mese,x=>x.tot)),`${mese.length} documenti dal ${fD(ms)}`)}${kpi('Da pagare',eur(sum(dp,x=>x.tot)),`${dp.length} spese aperte`)}${kpi('Scadute',eur(sum(scd,x=>x.tot)),`${scd.length} spese`,scd.length?'var(--bad)':'')}${kpi('In scadenza entro 30 giorni',eur(sum(n30,x=>x.tot)),`${n30.length} spese`)}</div>
   <div class="grid g21" style="margin-top:16px"><div class="card"><div class="card-h" style="flex-wrap:wrap;align-items:flex-start"><div class="cats">${cats.map(c=>`<button data-act="speseCat" data-v="${c}" class="${UI.speseCat===c?'on':''}">${c}</button>`).join('')}</div><div class="seg">${['Tutte','Da pagare','Pagate'].map(k=>`<button data-act="speseStato" data-v="${k}" class="${UI.speseStato===k?'on':''}">${k}</button>`).join('')}</div></div>
    <div class="tblwrap"><table class="tbl"><thead><tr><th>Spesa</th><th>Categoria</th><th>Ricorrenza</th><th>Scadenza</th><th class="r">Importo</th><th>Stato</th><th></th></tr></thead><tbody>
@@ -1180,6 +1181,102 @@ const EXTRA_ACTIONS={
   payDoc:d=>{const [c,id]=d.v.split('|');payDocModal(c,id)},
   newSpesa:newSpesaModal,newFatt:newFattModal,newForn:newFornModal
 };
+
+/* ---- Importazione documenti: fattura elettronica e foto ---- */
+function sampleXml(kind){
+  const d=n=>{const x=dayStart(NOW);x.setDate(x.getDate()+n);return new Date(x-x.getTimezoneOffset()*6e4).toISOString().slice(0,10)};
+  const S1=kind==='merce'
+    ?{nome:'Grossista Ortofrutta Parma (demo)',piva:'00000000101',num:'2026/'+(1100+Math.floor(Math.random()*800)),righe:[['Mele Golden cat. I - Trentino','60.00','1.05'],['Pomodori ramati cat. I - Sicilia','40.00','1.50'],['Finocchi cat. I - Puglia','30.00','1.00']],al:'4.00',scad:30}
+    :{nome:'Energia Esempio S.p.A. (demo)',piva:'00000000999',num:'E-'+(400000+Math.floor(Math.random()*90000)),righe:[['Fornitura energia elettrica bimestre set-ott','1','298.40'],['Oneri di sistema e trasporto','1','41.70']],al:'22.00',scad:15};
+  let imp=0;const lines=S1.righe.map((r,i)=>{const t=+r[1]*+r[2];imp+=t;return `<DettaglioLinee><NumeroLinea>${i+1}</NumeroLinea><Descrizione>${r[0]}</Descrizione><Quantita>${r[1]}</Quantita><PrezzoUnitario>${r[2]}</PrezzoUnitario><PrezzoTotale>${t.toFixed(2)}</PrezzoTotale><AliquotaIVA>${S1.al}</AliquotaIVA></DettaglioLinee>`}).join('');
+  const iva=Math.round(imp*parseFloat(S1.al))/100;const tot=(imp+iva).toFixed(2);
+  return `<?xml version="1.0" encoding="UTF-8"?><p:FatturaElettronica versione="FPR12" xmlns:p="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2"><FatturaElettronicaHeader><CedentePrestatore><DatiAnagrafici><IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>${S1.piva}</IdCodice></IdFiscaleIVA><Anagrafica><Denominazione>${S1.nome}</Denominazione></Anagrafica></DatiAnagrafici></CedentePrestatore></FatturaElettronicaHeader><FatturaElettronicaBody><DatiGenerali><DatiGeneraliDocumento><TipoDocumento>TD01</TipoDocumento><Divisa>EUR</Divisa><Data>${d(0)}</Data><Numero>${S1.num}</Numero><ImportoTotaleDocumento>${tot}</ImportoTotaleDocumento></DatiGeneraliDocumento></DatiGenerali><DatiBeniServizi>${lines}<DatiRiepilogo><AliquotaIVA>${S1.al}</AliquotaIVA><ImponibileImporto>${imp.toFixed(2)}</ImponibileImporto><Imposta>${iva.toFixed(2)}</Imposta></DatiRiepilogo></DatiBeniServizi><DatiPagamento><DettaglioPagamento><ModalitaPagamento>MP05</ModalitaPagamento><DataScadenzaPagamento>${d(S1.scad)}</DataScadenzaPagamento><ImportoPagamento>${tot}</ImportoPagamento></DettaglioPagamento></DatiPagamento></FatturaElettronicaBody></p:FatturaElettronica>`;
+}
+function parseFPA(text){
+  const m=text.match(/<([A-Za-z0-9_]+:)?FatturaElettronica[\s>][\s\S]*<\/([A-Za-z0-9_]+:)?FatturaElettronica>/);
+  if(!m)throw new Error('Nel file non c\'è una fattura elettronica leggibile.');
+  const doc=new DOMParser().parseFromString(m[0].replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g,''),'application/xml');
+  if(doc.getElementsByTagName('parsererror').length)throw new Error('Il file della fattura è danneggiato o in un formato non previsto.');
+  const g=(el,t)=>{const x=el?el.getElementsByTagName(t)[0]:null;return x?x.textContent.trim():''};
+  const ced=doc.getElementsByTagName('CedentePrestatore')[0];const dg=doc.getElementsByTagName('DatiGeneraliDocumento')[0];
+  if(!ced||!dg)throw new Error('Mancano i dati del fornitore o del documento.');
+  const nome=g(ced,'Denominazione')||(g(ced,'Nome')+' '+g(ced,'Cognome')).trim();
+  const piva=g(ced.getElementsByTagName('IdFiscaleIVA')[0],'IdCodice');
+  let imp=0,iva=0,al=0;for(const r of doc.getElementsByTagName('DatiRiepilogo')){imp+=parseFloat(g(r,'ImponibileImporto'))||0;iva+=parseFloat(g(r,'Imposta'))||0;al=Math.max(al,parseFloat(g(r,'AliquotaIVA'))||0)}
+  const td=parseFloat(g(dg,'ImportoTotaleDocumento'));
+  const descr=[...doc.getElementsByTagName('Descrizione')].slice(0,3).map(x=>x.textContent.trim()).join(', ');
+  return{fonte:'Fattura elettronica',nome,piva,num:g(dg,'Numero'),data:g(dg,'Data'),imp:Math.round(imp*100),iva:Math.round(iva*100),tot:Math.round((isNaN(td)?imp+iva:td)*100),aliq:al,scad:g(doc.documentElement,'DataScadenzaPagamento'),descr,tipo:g(dg,'TipoDocumento')};
+}
+async function readFPAFile(file){
+  const buf=await file.arrayBuffer();
+  let t=new TextDecoder('utf-8').decode(buf);
+  if(!/FatturaElettronica/.test(t)){const l=new TextDecoder('iso-8859-1').decode(buf);t=l;if(/^\s*MI/.test(l)){try{t=atob(l.replace(/\s/g,''))}catch(e){}}}
+  return parseFPA(t);
+}
+function classifyDoc(x){
+  const n=norm(x.nome+' '+x.descr);const nn=s=>norm(s).replace(/\(demo\)/,'').trim();
+  const f=S.fornitori.find(f=>(f.piva&&x.piva&&f.piva.replace(/\D/g,'').endsWith(x.piva))||nn(f.nome)===nn(x.nome));
+  if(f)return{kind:'fattura',forn:f.id};
+  const rules=[[/energia|luce|elettric|enel|edison|hera|iren|a2a|plenitude/,'Energia elettrica'],[/acqua|idric|gas /,'Gas e acqua'],[/telecom|\btim\b|vodafone|wind|fastweb|iliad|telefon|fibra/,'Telefono e internet'],[/commercialist|contabil/,'Commercialista'],[/assicura|polizza/,'Assicurazione'],[/carburant|benzin|gasolio|diesel|rifornim/,'Trasporti'],[/sacchett|imballag|vaschett/,'Imballaggi'],[/affitt|locazion/,'Affitto'],[/frigor|manutenz|riparaz/,'Manutenzione']];
+  for(const [r,c] of rules)if(r.test(n))return{kind:'spesa',cat:c};
+  if(/frutta|verdur|ortofrutt|agrum|mele|patate|pomodor/.test(n))return{kind:'fattura',forn:null};
+  return{kind:'spesa',cat:'Altro'};
+}
+const isDup=x=>[...S.fatture,...S.spese].some(y=>(y.num||y.descr||'').includes(x.num)&&x.num);
+function saveDoc(x,c){
+  if(c.kind==='fattura'){
+    let fid=c.forn;
+    if(!fid){fid='F'+(Math.max(...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id:fid,nome:x.nome,piva:x.piva,tipo:'Altro',contatto:'—',tel:'—',email:'—',giorni:'Da definire',pagamento:'Bonifico 30 gg',qualita:null,puntualita:null});log('Nuovo fornitore',x.nome+' (da fattura importata)')}
+    const fo=forn(fid);let sc=x.scad?new Date(x.scad+'T12:00'):null;if(!sc){const gg=+((fo.pagamento.match(/(\d+) gg/)||[0,0])[1]);sc=new Date(x.data+'T12:00');sc.setDate(sc.getDate()+gg)}
+    S.fatture.push({id:uid('FA'),num:'Fatt. '+x.num,forn:fid,data:new Date(x.data+'T12:00').toISOString(),scadenza:sc.toISOString(),imp:x.imp,iva:x.iva,tot:x.tot,stato:'Da pagare',pagataIl:null,metodo:'',doc:x.file||'',fonte:x.fonte});
+    log('Documento importato',`${x.fonte} · ${x.nome} · n. ${x.num} · ${eur(x.tot)}`);
+  }else{
+    const sc=new Date((x.scad||x.data)+'T12:00');const pag=x.fonte==='Foto scontrino';
+    S.spese.push({id:uid('S'),cat:c.cat,descr:(x.descr||c.cat).slice(0,80)+(x.num?' · n. '+x.num:''),ben:x.nome||'—',tot:x.tot,imp:x.imp,iva:x.iva,aliq:x.aliq,ric:'Una tantum',data:new Date(x.data+'T12:00').toISOString(),scadenza:sc.toISOString(),stato:pag?'Pagata':'Da pagare',pagataIl:pag?sc.toISOString():null,metodo:pag?'Carta':'',doc:x.file||'',fonte:x.fonte,num:x.num});
+    log('Documento importato',`${x.fonte} · ${c.cat} · ${x.nome} · ${eur(x.tot)}`);
+  }
+}
+function reviewDoc(x,img){
+  const c=classifyDoc(x);const dup=isDup(x);
+  const fOpts=`<option value="">Nuovo fornitore: ${esc(x.nome||'—')}</option>`+S.fornitori.map(f=>`<option value="${f.id}" ${c.forn===f.id?'selected':''}>${esc(f.nome)}</option>`).join('');
+  const e=v=>(v/100).toFixed(2).replace('.',',');
+  openModal('Controlla i dati letti',`${img?`<img src="${img}" alt="Foto del documento" style="max-height:220px;object-fit:contain;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)">`:''}
+  <div class="alert ${x.fonte==='Foto scontrino'?'warn':'ok'} small">${x.fonte==='Foto scontrino'?'<b>Lettura simulata.</b> Nella versione completa l\'AI legge dalla foto data, importo, IVA e partita IVA. Qui i campi contengono valori di esempio: correggili.':'<b>Dati letti dal file della fattura elettronica.</b> Controlla e conferma: nulla viene salvato senza il tuo consenso.'}</div>
+  ${dup?'<div class="alert bad small">Attenzione: esiste già un documento con lo stesso numero. Potrebbe essere un doppione.</div>':''}
+  <div class="grid g2"><div class="field"><label for="rv-k">Registra come</label><select id="rv-k"><option value="fattura" ${c.kind==='fattura'?'selected':''}>Acquisto di merce (fornitore)</option><option value="spesa" ${c.kind==='spesa'?'selected':''}>Spesa generale</option></select></div>
+  <div class="field"><label for="rv-c">Categoria spesa (se spesa)</label><select id="rv-c">${SPESE_CAT.map(k=>`<option ${k===c.cat?'selected':''}>${k}</option>`).join('')}</select></div></div>
+  <div class="grid g2"><div class="field"><label for="rv-n">Intestatario</label><input id="rv-n" value="${esc(x.nome)}"></div><div class="field"><label for="rv-f">Fornitore in anagrafica (se acquisto)</label><select id="rv-f">${fOpts}</select></div></div>
+  <div class="grid g3"><div class="field"><label for="rv-num">Numero</label><input id="rv-num" value="${esc(x.num)}"></div><div class="field"><label for="rv-d">Data</label><input id="rv-d" type="date" value="${esc(x.data)}"></div><div class="field"><label for="rv-s">Scadenza</label><input id="rv-s" type="date" value="${esc(x.scad||'')}"></div></div>
+  <div class="grid g3"><div class="field"><label for="rv-i">Imponibile (€)</label><input id="rv-i" class="num" value="${e(x.imp)}"></div><div class="field"><label for="rv-v">IVA (€)</label><input id="rv-v" class="num" value="${e(x.iva)}"></div><div class="field"><label for="rv-t">Totale (€)</label><input id="rv-t" class="num" value="${e(x.tot)}"></div></div>
+  <div class="field"><label for="rv-ds">Descrizione</label><input id="rv-ds" value="${esc(x.descr)}"></div>
+  ${x.piva?`<div class="small muted">Partita IVA fornitore: ${esc(x.piva)} · tipo documento ${esc(x.tipo||'—')}</div>`:''}`,
+  [{label:'Annulla'},{label:'Conferma e salva',cls:'primary',fn:()=>{
+    const num=s=>Math.round(parseFloat(String(s).replace(/\./g,'').replace(',','.'))*100);
+    const y={...x,nome:val('rv-n'),num:val('rv-num'),data:val('rv-d'),scad:val('rv-s'),imp:num(val('rv-i')),iva:num(val('rv-v'))||0,tot:num(val('rv-t')),descr:val('rv-ds')};
+    if(!y.data||!y.tot||y.tot<=0){toast('Controlla data e totale del documento.','warn');return false}
+    const k=val('rv-k');saveDoc(y,{kind:k,forn:val('rv-f')||null,cat:val('rv-c')});
+    if(k==='fattura'){UI.acqTab='fatture';UI.acqStato='Tutte';UI.acqForn='';location.hash='acquisti'}else{UI.speseCat='Tutte';UI.speseStato='Tutte';location.hash='spese'}
+    render();toast(k==='fattura'?'Fattura salvata tra gli acquisti.':'Spesa salvata.')}}],true);
+}
+function scanModal(){
+  openModal('Importa o scansiona un documento',`<div class="grid g3">
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Fattura elettronica</h3><div class="small muted">File XML o P7M ricevuto dal fornitore, dalla PEC o scaricato dal cassetto fiscale. I dati vengono letti in modo esatto.</div><label class="btn primary" for="imp-xml" style="justify-content:center">Scegli file XML / P7M</label><input id="imp-xml" type="file" accept=".xml,.p7m,application/xml,text/xml" hidden><div class="small muted">Oppure prova con un esempio:</div><div class="actions"><button class="btn sm" data-act="impSample" data-v="merce">Fattura merce</button><button class="btn sm" data-act="impSample" data-v="luce">Bolletta luce</button></div></div></div>
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Foto dal telefono</h3><div class="small muted">Scontrino del carburante, ricevuta, documento di trasporto cartaceo. Dal telefono si apre direttamente la fotocamera.</div><label class="btn citrus" for="imp-foto" style="justify-content:center">Scatta o scegli foto</label><input id="imp-foto" type="file" accept="image/*" hidden><div class="small muted">In questa demo la lettura della foto è simulata.</div></div></div>
+   <div class="card"><div class="card-b stack" style="gap:8px"><h3>Arrivo automatico</h3><div class="small muted">Nella versione completa le fatture elettroniche arrivano da sole ogni giorno dal Sistema di Interscambio, senza scansionare nulla.</div><button class="btn" data-act="impSync" style="justify-content:center">Simula sincronizzazione</button></div></div>
+  </div>`,[{label:'Chiudi'}],true);
+}
+async function onImportFile(input){
+  const f=input.files[0];if(!f)return;
+  if(input.id==='imp-xml'){try{const x=await readFPAFile(f);x.file=f.name;reviewDoc(x)}catch(e){toast(e.message||'Impossibile leggere il file.','warn')}}
+  else{const url=URL.createObjectURL(f);const d=new Date(NOW-NOW.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+    reviewDoc({fonte:'Foto scontrino',nome:'Distributore carburante (esempio)',piva:'',num:'',data:d,scad:d,imp:5934,iva:1306,tot:7240,aliq:22,descr:'Rifornimento gasolio furgone',file:f.name},url)}
+}
+const SCAN_ACTIONS={
+  scanDoc:scanModal,
+  impSample:d=>{reviewDoc({...parseFPA(sampleXml(d.v)),file:'esempio-'+d.v+'.xml'})},
+  impSync:()=>{if(S.syncDone){closeModal();toast('Nessun nuovo documento dal Sistema di Interscambio.');return}S.syncDone=true;let n=0;['merce','luce'].forEach(k=>{const x=parseFPA(sampleXml(k));x.fonte='Sistema di Interscambio (simulato)';if(isDup(x))return;saveDoc(x,classifyDoc(x));n++});closeModal();render();toast(`${n} documenti arrivati dal Sistema di Interscambio (simulazione): li trovi in Acquisti e in Spese.`)}
+};
+document.addEventListener('change',e=>{if(e.target.id==='imp-xml'||e.target.id==='imp-foto')onImportFile(e.target)});
 
 /* ---- Analisi e report ---- */
 VIEWS.analisi=()=>{
@@ -1401,7 +1498,7 @@ $('#gsearch').addEventListener('input',e=>{
   const ps=S.prodotti.filter(p=>norm(p.nome).replace(/\s/g,'').includes(q)||p.plu===q).slice(0,5);
   box.innerHTML=(cs.map(c=>`<button data-act="gC" data-v="${c.id}"><span class="avatar" style="width:24px;height:24px;font-size:10px">${ini(c)}</span>${esc(cliNome(c))}<span class="muted small" style="margin-left:auto">Cliente</span></button>`).join('')+ps.map(p=>`<button data-act="gP" data-v="${p.id}"><span style="width:10px;height:10px;border-radius:50%;background:${CAT_COL[p.cat]}"></span>${esc(p.nome)} <span class="muted small">${eur(p.prezzo)}/${p.unita}</span><span class="muted small" style="margin-left:auto">Prodotto</span></button>`).join(''))||'<div class="empty small">Nessun risultato</div>';box.hidden=false;
 });
-Object.assign(A,EXTRA_ACTIONS);
+Object.assign(A,EXTRA_ACTIONS,SCAN_ACTIONS);
 A.gC=d=>{$('#gresults').hidden=true;$('#gsearch').value='';cliModal(d.v)};
 A.gP=d=>{$('#gresults').hidden=true;$('#gsearch').value='';prodModal(d.v)};
 try{const t=localStorage.getItem('crmibra_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
