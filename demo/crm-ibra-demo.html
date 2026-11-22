@@ -329,7 +329,10 @@ gear:'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 
 plus:'M12 5v14M5 12h14',
 send:'M22 2 11 13M22 2l-7 20-4-9-9-4z',
 copy:'M9 9h11v11H9zM5 15H4V4h11v1',
-tag:'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01'
+tag:'M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01',
+wallet:'M3 7h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM3 7V6a2 2 0 0 1 2-2h11v3M16 13.5h.01',
+invoice:'M7 3h10v18l-2.5-1.5L12 21l-2.5-1.5L7 21zM10 8h4M10 12h4M10 16h2',
+pl:'M3 3v18h18M7 14l4-4 3 3 5-6'
 };
 const ic=(n,s=17)=>`<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICON[n]}"/></svg>`;
 
@@ -483,17 +486,46 @@ function seed(){
     {data:daysAgo(1).toISOString(),utente:'Ibrahim',azione:'Chiusura cassa',dettaglio:'Chiusura giornaliera completata, differenza 0,00 €'},
     {data:daysAgo(5).toISOString(),utente:'Ibrahim',azione:'Ricevimento merce',dettaglio:'Ordine n. 56 da Azienda Agricola Valtaro (demo) ricevuto'}
   ];
-  return {v:1,giorno:dayStart(NOW).toISOString(),fornitori,prodotti,clienti,vendite,lotti,movimenti,conversazioni,campagne,approvazioni,ordini,acquisti,automazioni,feedback,referral,fedeltaMov,registro,notifiche:[],
+  const fatture=[];let fan=1;
+  const fDays={F1:[1,2,3,4,5,6],F2:[2,4,6],F3:[3],F4:[1,4]};
+  const fRange={F1:[9000,22000],F2:[5000,12000],F3:[15000,30000],F4:[8000,16000]};
+  const fPay={F1:30,F2:0,F3:60,F4:30};
+  for(let d=44;d>=1;d--){const day=daysAgo(d);const dow=day.getDay();
+    for(const f of ['F1','F2','F3','F4']){if(!fDays[f].includes(dow))continue;
+      const tot=ri(fRange[f][0],fRange[f][1]);const imp=Math.round(tot/1.04);
+      const sc=new Date(day);sc.setDate(sc.getDate()+fPay[f]);
+      const paid=fPay[f]===0||(sc<daysAgo(0)&&R()<.85);
+      fatture.push({id:'FA'+(fan++),num:(f==='F2'?'Ric. ':'Fatt. ')+ri(100,999)+'/'+day.getFullYear(),forn:f,data:day.toISOString(),scadenza:sc.toISOString(),imp,iva:tot-imp,tot,stato:paid?'Pagata':'Da pagare',pagataIl:paid?sc.toISOString():null,metodo:paid?(f==='F2'?'Contanti':'Bonifico'):''});
+    }}
+  const spese=[];let sn=1;const lim=daysAgo(-35);
+  const addS=(cat,descr,ben,tot,al,ric,data,stato,scad)=>{if(data>lim)return;const imp=Math.round(tot/(1+al/100));const sc=scad||data;spese.push({id:'S'+(sn++),cat,descr,ben,tot,imp,iva:tot-imp,aliq:al,ric,data:data.toISOString(),scadenza:sc.toISOString(),stato,pagataIl:stato==='Pagata'?sc.toISOString():null,metodo:stato==='Pagata'?(ric==='Una tantum'?'Carta':'Addebito SEPA'):'',doc:''})};
+  const md=(m,d)=>new Date(NOW.getFullYear(),NOW.getMonth()+m,d);
+  const st=d=>d<dayStart(NOW)?'Pagata':'Da pagare';
+  for(const m of [-1,0,1]){
+    addS('Affitto','Canone di locazione del negozio','Proprietario immobile (demo)',120000,0,'Mensile',md(m,5),st(md(m,5)));
+    addS('Telefono e internet','Linea fissa e fibra','Operatore telefonico (demo)',3490,22,'Mensile',md(m,12),st(md(m,12)));
+    addS('Telefono e internet','Cellulare aziendale','Operatore mobile (demo)',1500,22,'Mensile',md(m,12),st(md(m,12)));
+    addS('Commercialista','Tenuta contabilità e corrispettivi','Studio commercialista (demo)',18300,22,'Mensile',md(m,28),st(md(m,28)));
+    addS('Commissioni bancarie','Commissioni POS e conto corrente','Banca (demo)',ri(5200,6900),0,'Mensile',md(m,2),st(md(m,2)));
+  }
+  addS('Energia elettrica','Bolletta luce (celle frigo, banco, illuminazione)','Fornitore energia (demo)',41250,22,'Bimestrale',daysAgo(18),'Da pagare',daysAgo(3));
+  addS('Gas e acqua','Bolletta acqua','Gestore idrico (demo)',4600,10,'Trimestrale',daysAgo(25),'Pagata',daysAgo(10));
+  addS('Assicurazione','Polizza multirischio negozio','Compagnia assicurativa (demo)',48000,0,'Annuale',daysAgo(5),'Da pagare',daysAgo(-12));
+  addS('Tasse e tributi','TARI · rata','Comune (demo)',19000,0,'Semestrale',daysAgo(20),'Da pagare',daysAgo(-8));
+  addS('Manutenzione','Controllo celle frigorifere','Tecnico frigorista (demo)',18000,22,'Una tantum',daysAgo(9),'Da pagare',daysAgo(-21));
+  [3,10,17,24,31,38].forEach(k=>addS('Trasporti','Carburante furgone (mercato e consegne)','Distributore (demo)',ri(6000,9000),22,'Una tantum',daysAgo(k),'Pagata'));
+  [6,27].forEach(k=>addS('Imballaggi','Sacchetti compostabili e vaschette','Grossista imballaggi (demo)',ri(8500,11000),22,'Una tantum',daysAgo(k),'Pagata'));
+  return {v:2,fatture,spese,giorno:dayStart(NOW).toISOString(),fornitori,prodotti,clienti,vendite,lotti,movimenti,conversazioni,campagne,approvazioni,ordini,acquisti,automazioni,feedback,referral,fedeltaMov,registro,notifiche:[],
     impostazioni:{scontoMaxAddetto:10,resoSoglia:2000,ordineSoglia:30000,limiteMsgMese:4,premi:[{punti:100,nome:'Buono sconto 5 €',valore:500},{punti:250,nome:'Cassetta di frutta di stagione',valore:1500}]}};
 }
-const KEY='crmibra_demo_v1';
+const KEY='crmibra_demo_v2';
 let S;
-try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===1&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
+try{const raw=localStorage.getItem(KEY);if(raw){const x=JSON.parse(raw);if(x&&x.v===2&&x.giorno===dayStart(NOW).toISOString())S=x}}catch(e){}
 if(!S)S=seed();
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
 
 /* ============ Stato interfaccia ============ */
-const UI={role:'titolare',cassaCat:'Tutti',cassaQ:'',cart:[],cartCliente:null,cartSconto:0,venditeP:'oggi',venditeQ:'',clientiQ:'',clientiSeg:'Tutti',magTab:'giacenze',ordTab:'clienti',waSel:'W1',periodo:30,aiMsgs:[],prodQ:''};
+const UI={role:'titolare',cassaCat:'Tutti',cassaQ:'',cart:[],cartCliente:null,cartSconto:0,venditeP:'oggi',venditeQ:'',clientiQ:'',clientiSeg:'Tutti',magTab:'giacenze',ordTab:'clienti',waSel:'W1',periodo:30,aiMsgs:[],prodQ:'',acqTab:'fatture',acqStato:'Tutte',acqForn:'',speseCat:'Tutte',speseStato:'Tutte',cePer:'mese'};
 try{const r=sessionStorage.getItem('crmibra_role');if(r)UI.role=r}catch(e){}
 const ME=()=>UI.role==='titolare'?{nome:'Ibrahim',ruolo:'Titolare',ini:'IB'}:{nome:'Sara',ruolo:'Addetto vendite',ini:'SA'};
 const isTit=()=>UI.role==='titolare';
@@ -574,7 +606,8 @@ const NAV=[
   ['Vendita',[['cassa','Cassa','cart'],['vendite','Vendite e chiusura','receipt']]],
   ['Clienti',[['clienti','Clienti','users'],['segmenti','Segmenti','target'],['fedelta','Fedeltà','star'],['recupero','Recupero e recensioni','refresh']]],
   ['Comunicazione',[['whatsapp','WhatsApp','chat'],['campagne','Campagne','megaphone']]],
-  ['Merce',[['prodotti','Prodotti e listini','leaf'],['magazzino','Magazzino','box'],['ordini','Ordini','clipboard'],['fornitori','Fornitori','truck']]],
+  ['Merce',[['prodotti','Prodotti e listini','leaf'],['magazzino','Magazzino','box'],['ordini','Ordini','clipboard']]],
+  ['Acquisti e spese',[['fornitori','Fornitori','truck'],['acquisti','Acquisti e fatture','invoice'],['spese','Spese generali','wallet'],['contoeconomico','Conto economico','pl']]],
   ['Analisi',[['analisi','Performance e report','chart'],['assistente','Assistente AI','spark']]],
   ['Sistema',[['automazioni','Automazioni','bolt'],['approvazioni','Approvazioni','check'],['registro','Registro attività','list'],['impostazioni','Impostazioni','gear']]]
 ];
@@ -622,6 +655,7 @@ VIEWS.cruscotto=()=>{
   if(ur)alerts.push(['info',`<b>${ur} messaggi WhatsApp da leggere</b>`,'whatsapp','Apri']);
   if(pa.length)alerts.push(['warn',`<b>${pa.length} approvazioni in attesa</b> · ${esc(pa[0].titolo)}`,'approvazioni','Valuta']);
   if(poIn.length)alerts.push(['info',`<b>${poIn.length} ordine fornitore in arrivo</b> · ${esc(forn(poIn[0].forn).nome)} il ${fD(poIn[0].consegna)}`,'ordini','Dettagli']);
+  if(isTit()){const dov=[...S.fatture,...S.spese].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=7);const scd=dov.filter(x=>diffDays(x.scadenza,NOW)<0);if(dov.length)alerts.push([scd.length?'bad':'warn',`<b>${dov.length} pagamenti entro 7 giorni${scd.length?' ('+scd.length+' già scaduti)':''}</b> · totale ${eur(sum(dov,x=>x.tot))}`,'spese','Scadenzario'])}
   const last=today.slice(-6).reverse();
   return head(`Buongiorno, ${ME().nome}`,`${NOW.toLocaleDateString('it-IT',{weekday:'long',day:'numeric',month:'long',year:'numeric'})} · dati aggiornati alle ${fT(NOW)}`,`<button class="btn primary" data-act="go" data-v="cassa">${ic('cart',15)} Nuova vendita</button>`)+
   `<div class="grid g4">
@@ -983,17 +1017,168 @@ function reorderModal(){
 function receive(id){
   const o=S.acquisti.find(x=>x.id===id);
   openModal('Ricevimento merce · ordine n. '+o.n,`<div class="small muted">${esc(forn(o.forn).nome)} · controlla quantità e qualità, poi conferma: verranno creati i lotti.</div>${o.righe.map((r,i)=>{const p=prod(r.p);return `<div class="grid g2" style="align-items:end"><div><b>${esc(p.nome)}</b><div class="small muted">Ordinati ${fmtQ(r.q,p.unita)} · ${esc(p.origine)}</div></div><div class="field"><label for="rc-${i}">Ricevuti</label><input id="rc-${i}" class="num" value="${String(r.q).replace('.',',')}"></div></div>`}).join('')}<div class="field"><label for="rc-ddt">N. documento di trasporto</label><input id="rc-ddt" value="DDT ${100+o.n}/${NOW.getFullYear()}"></div>`,
-  [{label:'Annulla'},{label:'Conferma ricevimento',cls:'primary',fn:()=>{const ddt=val('rc-ddt');o.righe.forEach((r,i)=>{const q=parseFloat(val('rc-'+i).replace(',','.'))||0;if(q<=0)return;const p=prod(r.p);const sh=p.cat==='Agrumi'?14:9;const sc=dayStart(NOW);sc.setDate(sc.getDate()+sh);const lid='L'+String(S.lotti.length+1).padStart(4,'0');S.lotti.push({id:lid,prod:p.id,forn:o.forn,arrivo:new Date().toISOString(),qi:q,res:q,costo:r.c,origine:p.origine,scadenza:sc.toISOString(),ddt});p.costo=r.c;S.movimenti.push({id:uid('M'),data:new Date().toISOString(),tipo:'carico',prod:p.id,q,motivo:ddt,utente:ME().nome,lotto:lid})});o.stato='Ricevuto';log('Ricevimento merce',`Ordine n. ${o.n} · ${ddt}`);render();toast('Merce caricata: lotti creati e giacenze aggiornate.')}}],true);
+  [{label:'Annulla'},{label:'Conferma ricevimento',cls:'primary',fn:()=>{const ddt=val('rc-ddt');o.righe.forEach((r,i)=>{const q=parseFloat(val('rc-'+i).replace(',','.'))||0;if(q<=0)return;const p=prod(r.p);const sh=p.cat==='Agrumi'?14:9;const sc=dayStart(NOW);sc.setDate(sc.getDate()+sh);const lid='L'+String(S.lotti.length+1).padStart(4,'0');S.lotti.push({id:lid,prod:p.id,forn:o.forn,arrivo:new Date().toISOString(),qi:q,res:q,costo:r.c,origine:p.origine,scadenza:sc.toISOString(),ddt});p.costo=r.c;S.movimenti.push({id:uid('M'),data:new Date().toISOString(),tipo:'carico',prod:p.id,q,motivo:ddt,utente:ME().nome,lotto:lid})});{const fo=forn(o.forn);const gg=+((fo.pagamento.match(/(\d+) gg/)||[0,0])[1]);const imp=Math.round(sum(o.righe,r=>r.q*r.c));const iva=Math.round(imp*.04);const sc=dayStart(NOW);sc.setDate(sc.getDate()+gg);S.fatture.push({id:uid('FA'),num:'Fatt. su '+ddt,forn:o.forn,data:new Date().toISOString(),scadenza:sc.toISOString(),imp,iva,tot:imp+iva,stato:'Da pagare',pagataIl:null,metodo:'',ordine:o.n})}o.stato='Ricevuto';log('Ricevimento merce',`Ordine n. ${o.n} · ${ddt}`);render();toast('Merce caricata: lotti creati e giacenze aggiornate.')}}],true);
 }
 
 /* ---- Fornitori ---- */
+/* ---- Fornitori, acquisti, spese, conto economico ---- */
+function payState(x){if(x.stato==='Pagata')return{t:'Pagata',c:'ok'};const g=diffDays(x.scadenza,NOW);if(g<0)return{t:'Scaduta da '+(-g)+' gg',c:'bad'};if(g<=7)return{t:g===0?'Scade oggi':'Scade tra '+g+' gg',c:'warn'};return{t:'Da pagare',c:'info'}}
+const mStart=()=>new Date(NOW.getFullYear(),NOW.getMonth(),1);
+const inPer=(d,a,b)=>{const x=new Date(d);return x>=a&&x<b};
+const kpi=(l,v,d,col)=>`<div class="card kpi"><div class="l">${l}</div><div class="v"${col?` style="color:${col}"`:''}>${v}</div>${d?`<div class="d muted">${d}</div>`:''}</div>`;
+const SPESE_CAT=['Affitto','Energia elettrica','Gas e acqua','Telefono e internet','Commercialista','Assicurazione','Tasse e tributi','Commissioni bancarie','Trasporti','Imballaggi','Manutenzione','Personale','Altro'];
+
 VIEWS.fornitori=()=>{
-  return head('Fornitori','Anagrafica, condizioni, prodotti forniti e valutazione')+
-  `<div class="grid g2">${S.fornitori.map(f=>{const ps=S.prodotti.filter(p=>p.forn===f.id);const sc=S.movimenti.filter(m=>m.tipo==='scarto'&&ps.some(p=>p.id===m.prod));const car=S.movimenti.filter(m=>m.tipo==='carico'&&ps.some(p=>p.id===m.prod));const q=sum(sc,m=>m.q)/Math.max(1,sum(car,m=>m.q))*100;const acq=sum(S.acquisti.filter(o=>o.forn===f.id),o=>sum(o.righe,r=>r.q*r.c));
-   return `<div class="card"><div class="card-h"><div><h2>${esc(f.nome)}</h2><div class="small muted">${esc(f.tipo)}</div></div><span class="chip ${q>8?'warn':'ok'}">Scarto ${q.toFixed(1)}%</span></div><div class="card-b stack" style="gap:8px">
-   <div class="grid g2 small"><div><span class="muted">Contatto</span><div>${esc(f.contatto)}</div><div class="num">${esc(f.tel)}</div><div>${esc(f.email)}</div></div><div><span class="muted">Consegne</span><div>${esc(f.giorni)}</div><span class="muted">Pagamento</span><div>${esc(f.pagamento)}</div></div></div>
-   <div class="grid g2 small"><div><span class="muted">Qualità</span><div class="bar"><i style="width:${f.qualita*20}%"></i></div><div class="num">${f.qualita.toLocaleString('it-IT')} / 5</div></div><div><span class="muted">Puntualità</span><div class="bar"><i class="${f.puntualita<4?'warn':''}" style="width:${f.puntualita*20}%"></i></div><div class="num">${f.puntualita.toLocaleString('it-IT')} / 5</div></div></div>
-   <div class="small"><span class="muted">Prodotti forniti (${ps.length}):</span> ${ps.map(p=>esc(p.nome)).join(', ')}</div><div class="small muted">Ordinato nel periodo: <b class="num" style="color:var(--ink)">${eur(acq)}</b></div></div></div>`}).join('')}</div>`;
+  const d30=daysAgo(29);
+  return head('Fornitori',`${S.fornitori.length} fornitori · condizioni, prodotti, acquisti e pagamenti`,`<button class="btn" data-act="go" data-v="acquisti">${ic('invoice',15)} Fatture d'acquisto</button><button class="btn primary" data-act="newForn" ${isTit()?'':'disabled'}>${ic('plus',15)} Nuovo fornitore</button>`)+
+  `<div class="grid g2">${S.fornitori.map(f=>{
+    const ps=S.prodotti.filter(p=>p.forn===f.id);
+    const sc=S.movimenti.filter(m=>m.tipo==='scarto'&&ps.some(p=>p.id===m.prod));const car=S.movimenti.filter(m=>m.tipo==='carico'&&ps.some(p=>p.id===m.prod));
+    const q=car.length?sum(sc,m=>m.q)/Math.max(1,sum(car,m=>m.q))*100:null;
+    const fa=S.fatture.filter(x=>x.forn===f.id);const a30=sum(fa.filter(x=>new Date(x.data)>=d30),x=>x.tot);
+    const dp=fa.filter(x=>x.stato!=='Pagata');const scd=dp.filter(x=>diffDays(x.scadenza,NOW)<0);
+    const rate=(l,v)=>`<div><span class="muted">${l}</span>${v==null?'<div>Da valutare</div>':`<div class="bar"><i class="${v<4?'warn':''}" style="width:${v*20}%"></i></div><div class="num">${v.toLocaleString('it-IT')} / 5</div>`}</div>`;
+    return `<div class="card"><div class="card-h"><div><h2>${esc(f.nome)}</h2><div class="small muted">${esc(f.tipo)}</div></div>${q==null?'<span class="chip">Nuovo</span>':`<span class="chip ${q>8?'warn':'ok'}">Scarto ${q.toFixed(1)}%</span>`}</div><div class="card-b stack" style="gap:10px">
+    <div class="grid g3"><div><div class="muted small">Acquistato 30 gg</div><b class="num">${eur(a30)}</b></div><div><div class="muted small">Da pagare</div><b class="num">${eur(sum(dp,x=>x.tot))}</b></div><div><div class="muted small">Scaduto</div><b class="num" style="color:${scd.length?'var(--bad)':'inherit'}">${eur(sum(scd,x=>x.tot))}</b></div></div>
+    <div class="grid g2 small"><div><span class="muted">Contatto</span><div>${esc(f.contatto)}</div><div class="num">${esc(f.tel)}</div><div>${esc(f.email)}</div></div><div><span class="muted">Consegne</span><div>${esc(f.giorni)}</div><span class="muted">Pagamento</span><div>${esc(f.pagamento)}</div></div></div>
+    <div class="grid g2 small">${rate('Qualità',f.qualita)}${rate('Puntualità',f.puntualita)}</div>
+    <div class="small"><span class="muted">Prodotti forniti (${ps.length}):</span> ${ps.map(p=>esc(p.nome)).join(', ')||'nessuno ancora'}</div>
+    <div class="actions"><button class="btn sm" data-act="acqFornGo" data-v="${f.id}">Fatture</button><button class="btn sm" data-act="goOrdF">Ordini</button></div></div></div>`}).join('')}</div>`;
+};
+
+VIEWS.acquisti=()=>{
+  const ms=mStart(),end=daysAgo(-1);
+  const fa=S.fatture.slice().sort((a,b)=>new Date(b.data)-new Date(a.data));
+  const mese=fa.filter(x=>inPer(x.data,ms,end));
+  const dp=fa.filter(x=>x.stato!=='Pagata');const scd=dp.filter(x=>diffDays(x.scadenza,NOW)<0);const sett=dp.filter(x=>{const g=diffDays(x.scadenza,NOW);return g>=0&&g<=7});
+  let body='';
+  if(UI.acqTab==='fatture'){
+    let rows=fa;if(UI.acqForn)rows=rows.filter(x=>x.forn===UI.acqForn);
+    if(UI.acqStato==='Da pagare')rows=rows.filter(x=>x.stato!=='Pagata');else if(UI.acqStato==='Pagate')rows=rows.filter(x=>x.stato==='Pagata');
+    body=`<div class="card"><div class="card-h" style="flex-wrap:wrap"><div class="seg">${['Tutte','Da pagare','Pagate'].map(k=>`<button data-act="acqStato" data-v="${k}" class="${UI.acqStato===k?'on':''}">${k}</button>`).join('')}</div><select class="inp" style="max-width:300px" data-in="acqForn" id="acq-f" aria-label="Filtra per fornitore"><option value="">Tutti i fornitori</option>${S.fornitori.map(f=>`<option value="${f.id}" ${UI.acqForn===f.id?'selected':''}>${esc(f.nome)}</option>`).join('')}</select></div>
+    <div class="card-b small muted" style="display:flex;gap:18px;flex-wrap:wrap"><span><b class="num" style="color:var(--ink)">${rows.length}</b> documenti</span><span>Totale <b class="num" style="color:var(--ink)">${eur(sum(rows,x=>x.tot))}</b></span><span>di cui IVA <b class="num" style="color:var(--ink)">${eur(sum(rows,x=>x.iva))}</b></span></div>
+    <div class="tblwrap"><table class="tbl"><thead><tr><th>Documento</th><th>Fornitore</th><th>Data</th><th>Scadenza</th><th class="r">Imponibile</th><th class="r">IVA</th><th class="r">Totale</th><th>Stato</th><th></th></tr></thead><tbody>
+    ${rows.slice(0,150).map(x=>{const s=payState(x);return `<tr><td class="num">${esc(x.num)}${x.ordine?`<div class="small muted">da ordine n. ${x.ordine}</div>`:''}${x.doc?`<div class="small muted">Allegato: ${esc(x.doc)}</div>`:''}</td><td>${esc(forn(x.forn).nome)}</td><td>${fD(x.data)}</td><td>${fD(x.scadenza)}</td><td class="r">${eur(x.imp)}</td><td class="r">${eur(x.iva)}</td><td class="r"><b>${eur(x.tot)}</b></td><td><span class="chip ${s.c}">${s.t}</span>${x.pagataIl?`<div class="small muted">${fD(x.pagataIl)} · ${esc(x.metodo)}</div>`:''}</td><td class="r">${x.stato!=='Pagata'?`<button class="btn sm" data-act="payDoc" data-v="fatture|${x.id}" ${isTit()?'':'disabled'}>Registra pagamento</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="9" class="empty">Nessuna fattura</td></tr>'}
+    </tbody></table></div></div>`;
+  }else{
+    const d30=daysAgo(29);
+    const rows=S.fornitori.map(f=>{const x=S.fatture.filter(y=>y.forn===f.id);const o=x.filter(y=>y.stato!=='Pagata');const nx=o.slice().sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza))[0];const r30=x.filter(y=>new Date(y.data)>=d30);return{f,a30:sum(r30,y=>y.tot),n:r30.length,dp:sum(o,y=>y.tot),nx}});
+    body=`<div class="grid g21"><div class="card"><div class="tblwrap"><table class="tbl"><thead><tr><th>Fornitore</th><th class="r">Fatture 30 gg</th><th class="r">Acquistato 30 gg</th><th class="r">Da pagare</th><th>Prossima scadenza</th></tr></thead><tbody>${rows.map(r=>`<tr class="click" data-act="acqFornGo" data-v="${r.f.id}"><td><b>${esc(r.f.nome)}</b><div class="small muted">${esc(r.f.pagamento)}</div></td><td class="r">${r.n}</td><td class="r">${eur(r.a30)}</td><td class="r">${eur(r.dp)}</td><td>${r.nx?`${fD(r.nx.scadenza)} <span class="chip ${payState(r.nx).c}">${payState(r.nx).t}</span>`:'—'}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="card"><div class="card-h"><h2>Acquisti per fornitore · 30 giorni</h2></div><div class="card-b">${hbars(rows.slice().sort((a,b)=>b.a30-a.a30).map(r=>({l:r.f.nome.replace(' (demo)',''),v:r.a30})))}</div></div></div>`;
+  }
+  return head('Acquisti e fatture fornitori','Tutto quello che il negozio compra per la merce: fatture, scadenze e pagamenti',`<button class="btn" data-act="goOrdF">${ic('clipboard',15)} Ordini ai fornitori</button><button class="btn primary" data-act="newFatt">${ic('plus',15)} Registra fattura</button>`)+
+  `<div class="grid g4">${kpi('Acquistato nel mese',eur(sum(mese,x=>x.tot)),`${mese.length} documenti dal ${fD(ms)}`)}${kpi('Da pagare ai fornitori',eur(sum(dp,x=>x.tot)),`${dp.length} fatture aperte`)}${kpi('Scadute',eur(sum(scd,x=>x.tot)),`${scd.length} fatture`,scd.length?'var(--bad)':'')}${kpi('In scadenza entro 7 giorni',eur(sum(sett,x=>x.tot)),`${sett.length} fatture`)}</div>
+  <div class="tabs" style="margin-top:16px"><button data-act="acqTab" data-v="fatture" class="${UI.acqTab==='fatture'?'on':''}">Fatture</button><button data-act="acqTab" data-v="fornitori" class="${UI.acqTab==='fornitori'?'on':''}">Riepilogo per fornitore</button></div>`+body;
+};
+
+VIEWS.spese=()=>{
+  const ms=mStart(),end=daysAgo(-1);
+  const all=S.spese.slice().sort((a,b)=>new Date(b.scadenza)-new Date(a.scadenza));
+  const mese=all.filter(x=>inPer(x.data,ms,end));
+  const dp=all.filter(x=>x.stato!=='Pagata');const scd=dp.filter(x=>diffDays(x.scadenza,NOW)<0);const n30=dp.filter(x=>{const g=diffDays(x.scadenza,NOW);return g>=0&&g<=30});
+  let rows=all;if(UI.speseCat!=='Tutte')rows=rows.filter(x=>x.cat===UI.speseCat);
+  if(UI.speseStato==='Da pagare')rows=rows.filter(x=>x.stato!=='Pagata');else if(UI.speseStato==='Pagate')rows=rows.filter(x=>x.stato==='Pagata');
+  const byCat={};mese.forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.tot);
+  const cats=['Tutte',...SPESE_CAT.filter(c=>S.spese.some(x=>x.cat===c))];
+  const scad=[...S.spese.map(x=>({...x,k:x.descr,coll:'spese'})),...S.fatture.map(x=>({...x,k:'Fattura '+forn(x.forn).nome.replace(' (demo)',''),coll:'fatture'}))].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=30).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
+  return head('Spese generali','Affitto, bollette, telefono, commercialista e tutte le altre spese del negozio',`<button class="btn primary" data-act="newSpesa" ${isTit()?'':'disabled'}>${ic('plus',15)} Nuova spesa</button>`)+
+  `<div class="grid g4">${kpi('Spese del mese',eur(sum(mese,x=>x.tot)),`${mese.length} documenti dal ${fD(ms)}`)}${kpi('Da pagare',eur(sum(dp,x=>x.tot)),`${dp.length} spese aperte`)}${kpi('Scadute',eur(sum(scd,x=>x.tot)),`${scd.length} spese`,scd.length?'var(--bad)':'')}${kpi('In scadenza entro 30 giorni',eur(sum(n30,x=>x.tot)),`${n30.length} spese`)}</div>
+  <div class="grid g21" style="margin-top:16px"><div class="card"><div class="card-h" style="flex-wrap:wrap;align-items:flex-start"><div class="cats">${cats.map(c=>`<button data-act="speseCat" data-v="${c}" class="${UI.speseCat===c?'on':''}">${c}</button>`).join('')}</div><div class="seg">${['Tutte','Da pagare','Pagate'].map(k=>`<button data-act="speseStato" data-v="${k}" class="${UI.speseStato===k?'on':''}">${k}</button>`).join('')}</div></div>
+   <div class="tblwrap"><table class="tbl"><thead><tr><th>Spesa</th><th>Categoria</th><th>Ricorrenza</th><th>Scadenza</th><th class="r">Importo</th><th>Stato</th><th></th></tr></thead><tbody>
+   ${rows.map(x=>{const s=payState(x);return `<tr><td><b>${esc(x.descr)}</b><div class="small muted">${esc(x.ben)}${x.doc?' · allegato: '+esc(x.doc):''}</div></td><td>${esc(x.cat)}</td><td>${esc(x.ric)}</td><td>${fD(x.scadenza)}</td><td class="r"><b>${eur(x.tot)}</b>${x.iva?`<div class="small muted">IVA ${eur(x.iva)}</div>`:''}</td><td><span class="chip ${s.c}">${s.t}</span>${x.pagataIl?`<div class="small muted">${fD(x.pagataIl)} · ${esc(x.metodo)}</div>`:''}</td><td class="r">${x.stato!=='Pagata'?`<button class="btn sm" data-act="payDoc" data-v="spese|${x.id}" ${isTit()?'':'disabled'}>Registra pagamento</button>`:''}</td></tr>`}).join('')||'<tr><td colspan="7" class="empty">Nessuna spesa</td></tr>'}
+   </tbody></table></div></div>
+  <div class="stack"><div class="card"><div class="card-h"><h2>Scadenzario 30 giorni</h2><span class="small muted">spese e fornitori</span></div><div class="card-b list">${scad.map(x=>{const s=payState(x);return `<div class="li"><span class="stripe" style="background:var(--${s.c==='ok'?'ok':s.c})"></span><div class="grow"><b>${esc(x.k)}</b><div class="small muted">${fD(x.scadenza)} · <span style="color:var(--${s.c})">${s.t}</span></div></div><b class="num">${eur(x.tot)}</b></div>`}).join('')||'<div class="empty small">Nessuna scadenza nei prossimi 30 giorni</div>'}</div></div>
+  <div class="card"><div class="card-h"><h2>Spese del mese per categoria</h2></div><div class="card-b">${Object.keys(byCat).length?hbars(Object.entries(byCat).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({l:k,v,c:'var(--citrus)'}))):'<div class="empty small">Nessuna spesa nel mese</div>'}</div></div>
+  <div class="alert info small">Registrare un pagamento qui non sposta denaro: serve solo a tenere traccia di cosa è stato pagato.</div></div></div>`;
+};
+
+VIEWS.contoeconomico=()=>{
+  const mese=UI.cePer==='mese';const a=mese?mStart():daysAgo(29),b=daysAgo(-1);
+  const vs=salesIn(a,b);let ric=0;
+  vs.forEach(v=>{const lordo=sum(v.righe,r=>Math.round(r.q*r.pr))||1;const f=v.tot/lordo;v.righe.forEach(r=>{ric+=Math.round(r.q*r.pr)*f/(1+prod(r.p).iva/100)})});
+  ric=Math.round(ric);const incassi=sum(vs,v=>v.tot);
+  const acq=sum(S.fatture.filter(x=>inPer(x.data,a,b)),x=>x.imp);
+  const sp=S.spese.filter(x=>inPer(x.data,a,b));const byCat={};sp.forEach(x=>byCat[x.cat]=(byCat[x.cat]||0)+x.imp);const spT=sum(sp,x=>x.imp);
+  const mc=ric-acq,ris=mc-spT;
+  const pc=v=>ric?(v/ric*100).toFixed(1).replace('.',',')+'%':'—';
+  const row=(l,v,o={})=>`<tr style="${o.b?'font-weight:700;background:var(--surface-2)':''}"><td style="${o.i?'padding-left:30px;color:var(--muted)':''}">${l}</td><td class="r" style="${o.col?'color:'+o.col:''}">${o.neg&&v?'− ':''}${eur(Math.abs(v)*(o.neg?1:Math.sign(v)||1))}</td><td class="r muted">${pc(Math.abs(v))}</td></tr>`;
+  const pagF=sum(S.fatture.filter(x=>x.pagataIl&&inPer(x.pagataIl,a,b)),x=>x.tot),pagS=sum(S.spese.filter(x=>x.pagataIl&&inPer(x.pagataIl,a,b)),x=>x.tot);
+  const saldo=incassi-pagF-pagS;
+  const imp30=[...S.fatture,...S.spese].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=30);
+  return head('Conto economico',`${mese?'Mese in corso, dal '+fD(a):'Ultimi 30 giorni, dal '+fD(a)} a oggi · stima gestionale, non sostituisce il bilancio`,`<div class="seg"><button data-act="cePer" data-v="mese" class="${mese?'on':''}">Mese in corso</button><button data-act="cePer" data-v="30" class="${mese?'':'on'}">Ultimi 30 giorni</button></div>`)+
+  `<div class="grid g4">${kpi('Ricavi netti',eur(ric),'Vendite al netto dell\'IVA')}${kpi('Acquisti di merce',eur(acq),pc(acq)+' dei ricavi')}${kpi('Spese generali',eur(spT),pc(spT)+' dei ricavi')}${kpi('Risultato stimato',eur(ris),pc(ris)+' dei ricavi',ris>=0?'var(--ok)':'var(--bad)')}</div>
+  <div class="grid g21" style="margin-top:16px"><div class="card"><div class="card-h"><h2>Dai ricavi al risultato</h2><span class="small muted">importi al netto dell'IVA</span></div><div class="tblwrap"><table class="tbl"><thead><tr><th>Voce</th><th class="r">Importo</th><th class="r">% sui ricavi</th></tr></thead><tbody>
+   ${row('Ricavi delle vendite',ric,{b:1})}
+   ${row('Acquisti di merce dai fornitori',acq,{neg:1})}
+   ${row('Margine commerciale',mc,{b:1})}
+   ${row('Spese generali',spT,{neg:1})}
+   ${Object.entries(byCat).sort((x,y)=>y[1]-x[1]).map(([k,v])=>row(esc(k),v,{neg:1,i:1})).join('')}
+   ${row('Risultato gestionale stimato',ris,{b:1,col:ris>=0?'var(--ok)':'var(--bad)'})}
+  </tbody></table></div><div class="card-b small muted">Esclusi: imposte sul reddito, contributi previdenziali del titolare, ammortamenti e variazione delle rimanenze. Gli acquisti sono contati alla data della fattura.</div></div>
+  <div class="stack"><div class="card"><div class="card-h"><h2>Entrate e uscite di cassa</h2></div><div class="card-b stack" style="gap:8px">
+   <div class="tot-row"><span>Incassi dalle vendite (IVA inclusa)</span><b class="num up">${eur(incassi)}</b></div>
+   <div class="tot-row"><span>Pagamenti ai fornitori</span><b class="num down">− ${eur(pagF)}</b></div>
+   <div class="tot-row"><span>Pagamenti di spese generali</span><b class="num down">− ${eur(pagS)}</b></div>
+   <div class="tot-row" style="border-top:1px solid var(--line);padding-top:8px"><b>Saldo del periodo</b><b class="num" style="color:${saldo>=0?'var(--ok)':'var(--bad)'}">${eur(saldo)}</b></div>
+   <div class="small muted">Comprende solo i pagamenti registrati nel gestionale.</div></div></div>
+  <div class="card"><div class="card-h"><h2>Da pagare nei prossimi 30 giorni</h2></div><div class="card-b stack" style="gap:8px"><div class="tot-row"><span>Fornitori</span><b class="num">${eur(sum(imp30.filter(x=>x.forn),x=>x.tot))}</b></div><div class="tot-row"><span>Spese generali</span><b class="num">${eur(sum(imp30.filter(x=>!x.forn),x=>x.tot))}</b></div><button class="btn sm" data-act="go" data-v="spese">Apri scadenzario</button></div></div>
+  <div class="alert warn small">Questi numeri servono a capire l'andamento del negozio. Per i conti ufficiali fa fede il commercialista.</div></div></div>`;
+};
+
+function payDocModal(coll,id){
+  const x=S[coll].find(y=>y.id===id);const nome=coll==='fatture'?'Fattura '+x.num+' · '+forn(x.forn).nome:x.descr;
+  const oggi=new Date(NOW-NOW.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  openModal('Registra pagamento',`<div><b>${esc(nome)}</b><div class="small muted">Importo ${eur(x.tot)} · scadenza ${fD(x.scadenza)}</div></div>
+  <div class="grid g2"><div class="field"><label for="pd-d">Data del pagamento</label><input id="pd-d" type="date" value="${oggi}"></div><div class="field"><label for="pd-m">Metodo</label><select id="pd-m"><option>Bonifico</option><option>Addebito SEPA</option><option>Carta</option><option>Contanti</option><option>Assegno</option></select></div></div>
+  <div class="alert info small">Viene solo registrato nel gestionale: nessun pagamento viene eseguito.</div>`,
+  [{label:'Annulla'},{label:'Segna come pagata',cls:'primary',fn:()=>{const d=val('pd-d');if(!d){toast('Indica la data del pagamento.','warn');return false}x.stato='Pagata';x.pagataIl=new Date(d+'T12:00').toISOString();x.metodo=val('pd-m');log('Pagamento registrato',`${nome} · ${eur(x.tot)} · ${x.metodo}`);render();toast('Pagamento registrato.')}}]);
+}
+function newSpesaModal(){
+  const oggi=new Date(NOW-NOW.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  openModal('Nuova spesa',`<div class="grid g2"><div class="field"><label for="ns-c">Categoria</label><select id="ns-c">${SPESE_CAT.map(c=>`<option>${c}</option>`).join('')}</select></div><div class="field"><label for="ns-r">Ricorrenza</label><select id="ns-r"><option>Una tantum</option><option>Mensile</option><option>Bimestrale</option><option>Trimestrale</option><option>Semestrale</option><option>Annuale</option></select></div></div>
+  <div class="field"><label for="ns-d">Descrizione *</label><input id="ns-d" placeholder="es. Bolletta luce settembre–ottobre"></div>
+  <div class="field"><label for="ns-b">A chi va pagata</label><input id="ns-b" placeholder="es. fornitore di energia, proprietario, studio"></div>
+  <div class="grid g2"><div class="field"><label for="ns-i">Importo totale (€) *</label><input id="ns-i" class="num" inputmode="decimal" placeholder="es. 245,30"></div><div class="field"><label for="ns-a">Di cui IVA</label><select id="ns-a"><option value="22">22%</option><option value="10">10%</option><option value="4">4%</option><option value="0">Esente / senza IVA</option></select></div></div>
+  <div class="grid g2"><div class="field"><label for="ns-dt">Data documento</label><input id="ns-dt" type="date" value="${oggi}"></div><div class="field"><label for="ns-s">Scadenza</label><input id="ns-s" type="date" value="${oggi}"></div></div>
+  <div class="field"><label for="ns-f">Allega bolletta o ricevuta (facoltativo)</label><input id="ns-f" type="file" accept="image/*,application/pdf"></div>
+  <label class="check"><input type="checkbox" id="ns-p"> Già pagata</label>`,
+  [{label:'Annulla'},{label:'Salva spesa',cls:'primary',fn:()=>{const d=val('ns-d');const t=Math.round(parseFloat(val('ns-i').replace(/\./g,'').replace(',','.'))*100);if(!d){toast('Scrivi una descrizione della spesa.','warn');return false}if(!t||t<=0){toast('Inserisci un importo valido.','warn');return false}
+    const al=+val('ns-a');const imp=Math.round(t/(1+al/100));const pag=document.getElementById('ns-p').checked;const f=document.getElementById('ns-f').files[0];
+    const dt=new Date((val('ns-dt')||val('ns-s'))+'T12:00'),sc=new Date((val('ns-s')||val('ns-dt'))+'T12:00');
+    S.spese.push({id:uid('S'),cat:val('ns-c'),descr:d,ben:val('ns-b')||'—',tot:t,imp,iva:t-imp,aliq:al,ric:val('ns-r'),data:dt.toISOString(),scadenza:sc.toISOString(),stato:pag?'Pagata':'Da pagare',pagataIl:pag?sc.toISOString():null,metodo:pag?'Registrata come pagata':'',doc:f?f.name:''});
+    log('Nuova spesa',`${val('ns-c')} · ${d} · ${eur(t)}`);render();toast('Spesa registrata.')}}],true);
+}
+function newFattModal(){
+  const oggi=new Date(NOW-NOW.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+  openModal('Registra fattura d\'acquisto',`<div class="field"><label for="nf-f">Fornitore</label><select id="nf-f">${S.fornitori.map(f=>`<option value="${f.id}" ${UI.acqForn===f.id?'selected':''}>${esc(f.nome)} · ${esc(f.pagamento)}</option>`).join('')}</select></div>
+  <div class="grid g2"><div class="field"><label for="nf-n">Numero documento *</label><input id="nf-n" placeholder="es. 1234/2026"></div><div class="field"><label for="nf-d">Data</label><input id="nf-d" type="date" value="${oggi}"></div></div>
+  <div class="grid g2"><div class="field"><label for="nf-i">Imponibile (€) *</label><input id="nf-i" class="num" inputmode="decimal"></div><div class="field"><label for="nf-a">Aliquota IVA</label><select id="nf-a"><option value="4">4%</option><option value="10">10%</option><option value="22">22%</option></select></div></div>
+  <div class="field"><label for="nf-x">Allega fattura (facoltativo)</label><input id="nf-x" type="file" accept="image/*,application/pdf,.xml"></div>
+  <div class="small muted">La scadenza viene calcolata dalle condizioni di pagamento del fornitore.</div>
+  <label class="check"><input type="checkbox" id="nf-p"> Già pagata</label>`,
+  [{label:'Annulla'},{label:'Registra',cls:'primary',fn:()=>{const n=val('nf-n');const imp=Math.round(parseFloat(val('nf-i').replace(/\./g,'').replace(',','.'))*100);if(!n){toast('Inserisci il numero della fattura.','warn');return false}if(!imp||imp<=0){toast('Inserisci l\'imponibile.','warn');return false}
+    const fo=forn(val('nf-f'));const gg=+((fo.pagamento.match(/(\d+) gg/)||[0,0])[1]);const d=new Date(val('nf-d')+'T12:00');const sc=new Date(d);sc.setDate(sc.getDate()+gg);const iva=Math.round(imp*(+val('nf-a'))/100);const pag=document.getElementById('nf-p').checked;const f=document.getElementById('nf-x').files[0];
+    S.fatture.push({id:uid('FA'),num:'Fatt. '+n,forn:fo.id,data:d.toISOString(),scadenza:sc.toISOString(),imp,iva,tot:imp+iva,stato:pag?'Pagata':'Da pagare',pagataIl:pag?d.toISOString():null,metodo:pag?'Registrata come pagata':'',doc:f?f.name:''});
+    log('Fattura d\'acquisto',`${fo.nome} · n. ${n} · ${eur(imp+iva)}`);UI.acqTab='fatture';render();toast('Fattura registrata.')}}],true);
+}
+function newFornModal(){
+  openModal('Nuovo fornitore',`<div class="field"><label for="nfo-n">Ragione sociale *</label><input id="nfo-n"></div>
+  <div class="grid g2"><div class="field"><label for="nfo-t">Tipo</label><select id="nfo-t"><option>Grossista mercato</option><option>Produttore locale</option><option>Produttore</option><option>Importatore</option><option>Altro</option></select></div><div class="field"><label for="nfo-p">P.IVA</label><input id="nfo-p"></div></div>
+  <div class="grid g2"><div class="field"><label for="nfo-c">Referente</label><input id="nfo-c"></div><div class="field"><label for="nfo-tel">Telefono</label><input id="nfo-tel" inputmode="tel"></div></div>
+  <div class="grid g2"><div class="field"><label for="nfo-e">Email</label><input id="nfo-e" type="email"></div><div class="field"><label for="nfo-g">Giorni di consegna</label><input id="nfo-g" placeholder="es. Lun, Mer, Ven"></div></div>
+  <div class="field"><label for="nfo-pg">Condizioni di pagamento</label><select id="nfo-pg"><option>Rimessa diretta</option><option>Bonifico 30 gg</option><option>Bonifico 60 gg</option><option>Bonifico 90 gg</option></select></div>`,
+  [{label:'Annulla'},{label:'Salva fornitore',cls:'primary',fn:()=>{const n=val('nfo-n');if(!n){toast('Inserisci la ragione sociale.','warn');return false}const id='F'+(Math.max(...S.fornitori.map(f=>+f.id.slice(1)))+1);S.fornitori.push({id,nome:n,tipo:val('nfo-t'),piva:val('nfo-p'),contatto:val('nfo-c')||'—',tel:val('nfo-tel')||'—',email:val('nfo-e')||'—',giorni:val('nfo-g')||'Da definire',pagamento:val('nfo-pg'),qualita:null,puntualita:null});log('Nuovo fornitore',n);render();toast('Fornitore salvato.')}}],true);
+}
+const EXTRA_ACTIONS={
+  acqTab:d=>{UI.acqTab=d.v;render()},
+  acqStato:d=>{UI.acqStato=d.v;render()},
+  acqFornGo:d=>{UI.acqForn=d.v;UI.acqTab='fatture';UI.acqStato='Tutte';if(location.hash==='#acquisti')render();else location.hash='acquisti'},
+  goOrdF:()=>{UI.ordTab='fornitori';if(location.hash==='#ordini')render();else location.hash='ordini'},
+  speseCat:d=>{UI.speseCat=d.v;render()},
+  speseStato:d=>{UI.speseStato=d.v;render()},
+  cePer:d=>{UI.cePer=d.v;render()},
+  payDoc:d=>{const [c,id]=d.v.split('|');payDocModal(c,id)},
+  newSpesa:newSpesaModal,newFatt:newFattModal,newForn:newFornModal
 };
 
 /* ---- Analisi e report ---- */
@@ -1026,7 +1211,15 @@ function aiAnswer(qRaw){
   const q=norm(qRaw);const F=[];let html='';let prop=null;
   const period=()=>{if(/ieri/.test(q))return['ieri',daysAgo(1),daysAgo(0)];if(/settiman|7 giorni/.test(q))return['negli ultimi 7 giorni',daysAgo(6),new Date(NOW.getTime()+864e5)];if(/mese|30 giorni/.test(q))return['negli ultimi 30 giorni',daysAgo(29),new Date(NOW.getTime()+864e5)];return['oggi',daysAgo(0),new Date(NOW.getTime()+864e5)]};
   const wb=w=>new RegExp('(^|[^a-z])'+w+'([^a-z]|$)').test(q);const pMatch=S.prodotti.find(p=>q.includes(norm(p.nome))||wb(norm(p.nome.split(' ')[0])));
-  if(/scort|riordin|finit|mancan|manca|ordinar/.test(q)){
+  if(/spes[aeo]|bollett|da pagare|pagar|pagament|debit|affitt|fornitori pag/.test(q)){
+    if(!isTit()){html='Non hai l\'autorizzazione per consultare spese e pagamenti. Chiedi al titolare.';return{html,F,prop}}
+    const ms=new Date(NOW.getFullYear(),NOW.getMonth(),1);const sp=S.spese.filter(x=>new Date(x.data)>=ms);
+    const dov=[...S.fatture.map(x=>({...x,k:'Fattura '+forn(x.forn).nome})),...S.spese.map(x=>({...x,k:x.descr}))].filter(x=>x.stato!=='Pagata'&&diffDays(x.scadenza,NOW)<=7).sort((a,b)=>new Date(a.scadenza)-new Date(b.scadenza));
+    const byC={};sp.forEach(x=>byC[x.cat]=(byC[x.cat]||0)+x.tot);
+    F.push('Spese generali','Fatture fornitori');
+    html=`Da inizio mese hai registrato <b>${eur(sum(sp,x=>x.tot))}</b> di spese generali: ${Object.entries(byC).sort((a,b)=>b[1]-a[1]).map(([k,v])=>esc(k)+' '+eur(v)).join(', ')}.<br>`+(dov.length?`Pagamenti da fare entro 7 giorni (${eur(sum(dov,x=>x.tot))}):<ul>${dov.map(x=>`<li>${esc(x.k)}: ${eur(x.tot)}, scadenza ${fD(x.scadenza)}${diffDays(x.scadenza,NOW)<0?' · <b>scaduta</b>':''}</li>`).join('')}</ul>`:'Nessun pagamento in scadenza nei prossimi 7 giorni.')+'Non posso pagare nulla: registro un pagamento solo quando lo confermi tu.';
+    prop={label:'Apri scadenzario',act:'go',v:'spese'};
+  }else if(/scort|riordin|finit|mancan|manca|ordinar/.test(q)){
     const low=lowStock();F.push('Giacenze per lotto','Scorte minime');
     html=low.length?`Ci sono <b>${low.length} prodotti sotto la scorta minima</b>:<ul>${low.map(p=>`<li>${esc(p.nome)}: ${fmtQ(giacenza(p.id),p.unita)} (minimo ${fmtQ(p.soglia,p.unita)}) · fornitore ${esc(forn(p.forn).nome)}</li>`).join('')}</ul>Posso preparare una proposta di riordino: la vedrai e potrai modificarla prima che venga inviata.`:'Nessun prodotto è sotto la scorta minima.';
     if(low.length)prop={label:'Prepara proposta di riordino',act:'reorder'};
@@ -1061,7 +1254,7 @@ function aiAnswer(qRaw){
   return{html,F,prop};
 }
 VIEWS.assistente=()=>{
-  const sug=['Quanto ho incassato oggi?','Quali sono i prodotti più venduti questa settimana?','Cosa devo riordinare?','Quali lotti sono in scadenza?','Quali clienti non tornano da tempo?','Qual è il margine per categoria?','Quanto ho scartato questo mese?','Come vanno le castagne?'];
+  const sug=['Quanto ho incassato oggi?','Quali sono i prodotti più venduti questa settimana?','Cosa devo riordinare?','Quali lotti sono in scadenza?','Quali clienti non tornano da tempo?','Qual è il margine per categoria?','Quanto ho scartato questo mese?','Come vanno le castagne?','Cosa devo pagare questa settimana?','Quanto ho speso questo mese?'];
   return head('Assistente AI','Fa domande ai dati del negozio, prepara bozze e proposte. Nessuna azione viene eseguita senza la tua conferma.',`<span class="chip citrus">Demo: risposte calcolate con regole, nessun modello AI collegato</span>`)+
   `<div class="card ai"><div class="ai-msgs" id="ai-msgs">${UI.aiMsgs.length?UI.aiMsgs.map(m=>m.q?`<div class="ai-q">${esc(m.q)}</div>`:`<div class="ai-a">${m.html}${m.prop?`<div style="margin-top:10px"><button class="btn sm primary" data-act="${m.prop.act}" data-v="${m.prop.v||''}">${esc(m.prop.label)}</button></div>`:''}${m.F.length?`<div class="src">Dati consultati: ${m.F.map(esc).join(' · ')} · con i permessi di ${esc(ME().nome)}</div>`:''}</div>`).join(''):`<div class="ai-a">Ciao ${ME().nome}, sono l'assistente di CRM IBRA. Leggo i dati del negozio con i tuoi stessi permessi e ti indico sempre da dove arrivano i numeri. Posso proporti azioni, ma sei tu a decidere.</div>`}</div>
   <div class="sugg">${sug.map(s=>`<button data-act="aiAsk" data-v="${esc(s)}">${esc(s)}</button>`).join('')}</div>
@@ -1208,6 +1401,7 @@ $('#gsearch').addEventListener('input',e=>{
   const ps=S.prodotti.filter(p=>norm(p.nome).replace(/\s/g,'').includes(q)||p.plu===q).slice(0,5);
   box.innerHTML=(cs.map(c=>`<button data-act="gC" data-v="${c.id}"><span class="avatar" style="width:24px;height:24px;font-size:10px">${ini(c)}</span>${esc(cliNome(c))}<span class="muted small" style="margin-left:auto">Cliente</span></button>`).join('')+ps.map(p=>`<button data-act="gP" data-v="${p.id}"><span style="width:10px;height:10px;border-radius:50%;background:${CAT_COL[p.cat]}"></span>${esc(p.nome)} <span class="muted small">${eur(p.prezzo)}/${p.unita}</span><span class="muted small" style="margin-left:auto">Prodotto</span></button>`).join(''))||'<div class="empty small">Nessun risultato</div>';box.hidden=false;
 });
+Object.assign(A,EXTRA_ACTIONS);
 A.gC=d=>{$('#gresults').hidden=true;$('#gsearch').value='';cliModal(d.v)};
 A.gP=d=>{$('#gresults').hidden=true;$('#gsearch').value='';prodModal(d.v)};
 try{const t=localStorage.getItem('crmibra_theme');if(t)document.documentElement.setAttribute('data-theme',t)}catch(e){}
