@@ -669,7 +669,7 @@ function itemScores(date){
   items.push({amb:"corano",l:"أذكار الصباح",sc:d.adhkar.m?1:0});
   items.push({amb:"corano",l:"أذكار المساء",sc:d.adhkar.s?1:0});
   const wd=parse(date).getDay(),ch=d.chk||{};
-  CHECKS.forEach(([k,l,amb])=>{if(k==="suleiman"&&(wd===0||wd===6))return;items.push({amb,l:l.replace(/^\S+ /,""),sc:ch[k]?1:0});});
+  CHECKS.forEach(([k,l,amb])=>{if(k==="suleiman"&&(wd===0||wd===6||aminaDay(date)))return;items.push({amb,l:l.replace(/^\S+ /,""),sc:ch[k]?1:0});});
   PRAYERS.forEach(([k,l])=>items.push({amb:"preghiera",l:"صلاة "+l+" في المسجد",sc:d.pr[k]===2?1:((d.pr[k]||0)>0?.5:0)}));
   return items;
 }
@@ -829,7 +829,8 @@ function renderOggi(){
 }
 function refreshChips(){
   const d=getDay(cur,false),ch=d.chk||{},wd=parse(cur).getDay();
-  const cb=$("chkBox");if(cb)cb.innerHTML=CHECKS.filter(([k])=>!(k==="suleiman"&&(wd===0||wd===6))).map(([k,l])=>`<button class="chip ${ch[k]?"c2":""}" data-ck="${k}">${ch[k]?"✓ ":""}${l}</button>`).join("");
+  const cb=$("chkBox");if(cb)cb.innerHTML=CHECKS.filter(([k])=>!(k==="suleiman"&&(wd===0||wd===6||aminaDay(cur)))).map(([k,l])=>`<button class="chip ${ch[k]?"c2":""}" data-ck="${k}">${ch[k]?"✓ ":""}${l}</button>`).join("")
+   +(wd>=1&&wd<=5?`<button class="chip ${aminaDay(cur)?"c1":""}" data-amina="1" ${wd===5||AMINA_FIXED.includes(cur)?"disabled":""}>👩 ${aminaDay(cur)?"أمينة تحضر سليمان اليوم":"تعارض اليوم؟ أمينة تحضره"}</button>`:"");
   const P=prayerTimes(cur);PRAYERS.forEach(([k,l])=>{const b=document.querySelector(`[data-pr="${k}"]`);if(!b)return;const v=d.pr[k]||0;b.className="chip c"+v;b.textContent=(v===2?"🕌 ":v===1?"✓ ":"")+l+" "+hm(P.iq[k]);});
   ["m","s"].forEach(k=>{const b=document.querySelector(`[data-ad="${k}"]`);if(!b)return;b.className="chip "+(d.adhkar[k]?"c1":"");b.textContent=(d.adhkar[k]?"✓ ":(k==="m"?"☀️ ":"🌙 "))+(k==="m"?"أذكار الصباح":"أذكار المساء");});
 }
@@ -843,6 +844,7 @@ function bindOggi(){
     if(b.dataset.pi!=null){const p=d.prio[+b.dataset.pi];p.s=(p.s+1)%4;b.className="st s"+p.s;b.textContent=ST_ICON[p.s];if(p.s===1)praise(b,true);touch(cur);}
     else if(b.dataset.pr){const k=b.dataset.pr;d.pr[k]=((d.pr[k]||0)+1)%3;touch(cur);refreshChips();renderNow();if(d.pr[k]===2)praise(b,false);}
     else if(b.dataset.ad){d.adhkar[b.dataset.ad]=!d.adhkar[b.dataset.ad];touch(cur);refreshChips();if(d.adhkar[b.dataset.ad])praise(b);}
+    else if(b.dataset.amina){S.cfg.amina=S.cfg.amina||{};S.cfg.amina[cur]=!S.cfg.amina[cur];persist("sfida/config");refreshChips();renderNow();renderTiles();toast(S.cfg.amina[cur]?"👩 أمينة تحضر سليمان اليوم":"🚲 أنت تحضر سليمان اليوم");return;}
     else if(b.dataset.ck){d.chk=d.chk||{};d.chk[b.dataset.ck]=!d.chk[b.dataset.ck];touch(cur);refreshChips();renderNow();renderMuhasaba();if(d.chk[b.dataset.ck])praise(document.querySelector(`[data-ck="${b.dataset.ck}"]`),false);}
     else if(b.id==="suggestDomani"){d.domani=suggestDomani(cur);while(d.domani.length<3)d.domani.push("");touch(cur);renderOggi();}
   });
@@ -916,6 +918,9 @@ function prayerTimes(date){
 }
 const hm=m=>pad(Math.floor(m/60)%24)+":"+pad(m%60);
 
+/* ===== قاعدة سليمان: عند التعارض تحضره أمه أمينة ===== */
+const AMINA_FIXED=["2026-12-02"]; // تعارض مع موعد «Vicino owais»
+function aminaDay(date){const wd=parse(date).getDay();if(wd===5)return true;if(AMINA_FIXED.includes(date))return true;return !!((S.cfg.amina||{})[date]);}
 /* ===== البرنامج اليومي المرتبط بالمواقيت ===== */
 function schedule(date){
   const P=prayerTimes(date),fri=parse(date).getDay()===5,wd=parse(date).getDay(),B=[];
@@ -936,7 +941,7 @@ function schedule(date){
   add("sira",820,P.asr-15,"🕋 السيرة النبوية","focus","lettura");
   add("asr",P.asr-15,P.iq.asr+25,"🕌 العصر في المسجد (اخرج قبل الأذان بربع ساعة) · حزبان","pray","asr");
   add("work2",P.iq.asr+25,950,"💼 العمل المسائي (ساعة)","work",1);
-  if(wd>=1&&wd<=5)add("suleiman",960,990,"🚲 سليمان: من المدرسة + تدريب الدراجة","chk","suleiman");
+  if(wd>=1&&wd<=5){if(aminaDay(date))add("suleiman",960,975,"👩 أمينة تحضر سليمان اليوم (تعارض مع مهمة)","plain");else add("suleiman",960,990,"🚲 سليمان: من المدرسة + تدريب الدراجة","chk","suleiman");}
   if(fri)add("dua",P.maghrib-60,P.maghrib,"🤲 آخر ساعة قبل المغرب في المسجد للدعاء","plain");
   add("maghrib",P.maghrib-10,P.iq.maghrib+20,"🕌 المغرب في المسجد · الراتبة · حزبان","pray","maghrib");
   add("acad",P.iq.maghrib+20,1080,"🎓 الدراسة الأكاديمية: العبودية / تايلر","num",["spec",.75]);
