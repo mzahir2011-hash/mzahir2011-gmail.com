@@ -1090,9 +1090,10 @@ function renderMuhasaba(){const el=$("muhasaba");if(!el)return;el.innerHTML=seve
 
 /* البريد */
 let mcpNs=null,mailUnsub=null,calUnsub=null,calKey="";
-const MAIL_INPUT={query:"in:inbox newer_than:10d (is:important OR is:starred OR is:unread) -category:promotions -category:social -category:forums",pageSize:25,view:"THREAD_VIEW_SUMMARY"};
+const MAIL_INPUT={query:"in:inbox newer_than:10d (is:important OR is:starred OR is:unread OR subject:(\"POSTA CERTIFICATA\") OR label:PEC) -category:promotions -category:social -category:forums",pageSize:25,view:"THREAD_VIEW_SUMMARY"};
 function classify(m){
   const s=[m.subject,m.sender,m.snippet].join(" ");const L=m.labelIds||[];
+  if(/posta certificata|pec\.aruba|@pec\.|legalmail|anomalia messaggio/i.test(s))return["📜","PEC",8,"var(--violet)"];
   if(/atterbal|طربال|aljisr|الجسر|jisr/i.test(s))return["🏛️","المؤسسات",6,"var(--c-tarbal)"];
   if(/sollecito|scadut|in scadenza|urgente|ultimo avviso|مستعجل/i.test(s))return["⏰","عاجل",7,"var(--bad)"];
   if(/avvenuto pagamento|ricevuta|riepilogo|codice di accesso|google play|il tuo ordine|benvenut|newsletter|enquiry closed/i.test(s))return["🧾","إشعار",0,"var(--muted)"];
