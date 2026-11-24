@@ -1093,6 +1093,7 @@ let mcpNs=null,mailUnsub=null,calUnsub=null,calKey="";
 const MAIL_INPUT={query:"in:inbox newer_than:10d (is:important OR is:starred OR is:unread OR subject:(\"POSTA CERTIFICATA\") OR label:PEC) -category:promotions -category:social -category:forums",pageSize:25,view:"THREAD_VIEW_SUMMARY"};
 function classify(m){
   const s=[m.subject,m.sender,m.snippet].join(" ");const L=m.labelIds||[];
+  if(/miodottore|fascicolo-sanitario|fascicolo sanitario|prenotazione cup|ausl|pediagroup|promemoria: visita|visita è confermata/i.test(s))return["🩺","صحة",7,"var(--c-salute)"];
   if(/posta certificata|pec\.aruba|@pec\.|legalmail|anomalia messaggio/i.test(s))return["📜","PEC",8,"var(--violet)"];
   if(/atterbal|طربال|aljisr|الجسر|jisr/i.test(s))return["🏛️","المؤسسات",6,"var(--c-tarbal)"];
   if(/sollecito|scadut|in scadenza|urgente|ultimo avviso|مستعجل/i.test(s))return["⏰","عاجل",7,"var(--bad)"];
